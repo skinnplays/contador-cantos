@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#0e3b37">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Cantos">
+  <title>Contador de Cantos</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <h1>Contador de Cantos</h1>
+      <span id="wake" class="wake" data-state="off" title="Mantém a tela do celular ligada">Tela ligada</span>
+    </header>
+
+    <section class="setup">
+      <input id="bird" class="bird" type="text" placeholder="Nome do pássaro" autocomplete="off" maxlength="40" enterkeyhint="done" aria-label="Nome do pássaro">
+      <div class="duration" role="radiogroup" aria-label="Duração da prova">
+        <button type="button" role="radio" data-min="10">10 min</button>
+        <button type="button" role="radio" data-min="15">15 min</button>
+      </div>
+    </section>
+
+    <section class="timer-card" id="timerCard">
+      <div class="timer" id="timer" aria-live="off">15:00</div>
+      <div class="progress" aria-hidden="true"><div id="bar"></div></div>
+      <div class="status" id="status">Toque em +1 ou Iniciar para começar</div>
+    </section>
+
+    <section class="stats">
+      <div class="stat"><span class="label">Cantos</span><strong id="total">0</strong></div>
+      <div class="stat" id="avgCard"><span class="label">Média/min</span><strong id="avg">—</strong></div>
+      <div class="stat accent" id="forecastCard"><span class="label" id="forecastLabel">Previsão</span><strong id="forecast">—</strong><small class="hint">estimativa inicial</small></div>
+    </section>
+
+    <section class="vistos" aria-label="Vistos">
+      <div class="visto-step" role="radiogroup" aria-label="Visto a cada">
+        <span class="visto-title">Visto</span>
+        <button type="button" role="radio" data-step="50">50</button>
+        <button type="button" role="radio" data-step="60">60</button>
+      </div>
+      <div class="visto-list" id="vistoList"></div>
+    </section>
+
+    <section class="minutes" id="minutes" aria-label="Cantos por minuto"></section>
+
+    <section class="controls">
+      <div class="row">
+        <button type="button" id="startPause" class="btn primary">Iniciar</button>
+        <button type="button" id="reset" class="btn ghost">Zerar</button>
+      </div>
+      <div class="row count-row">
+        <button type="button" id="minus" class="btn minus" aria-label="Retirar um canto">−1</button>
+        <button type="button" id="plus" class="btn plus" aria-label="Adicionar um canto">
+          <span class="plus-big">+1</span><span class="plus-sub">canto</span>
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="alert" hidden>
+    <strong id="toastTitle">1º VISTO</strong>
+    <span id="toastText">50 cantos · 03:12</span>
+  </div>
+
+  <dialog id="confirm" class="confirm">
+    <form method="dialog">
+      <p>Começar do zero? Os cantos e o tempo desta prova serão apagados.</p>
+      <div class="row">
+        <button value="cancel" class="btn ghost">Cancelar</button>
+        <button value="ok" class="btn danger">Zerar</button>
+      </div>
+    </form>
+  </dialog>
+</body>
+</html>
