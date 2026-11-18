@@ -1,6 +1,9 @@
 // Funciona sem internet: responde do cache na hora e atualiza o cache em segundo plano.
-const CACHE = 'contador-cantos-v3';
-const ASSETS = ['./', 'index.html', 'styles.css', 'app.js', 'logic.js', 'manifest.webmanifest', 'icon.svg'];
+const CACHE = 'contador-cantos-v4';
+const ASSETS = [
+  './', 'index.html', 'styles.css', 'app.js', 'logic.js', 'manifest.webmanifest',
+  'icon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png',
+];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));

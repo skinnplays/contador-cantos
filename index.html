@@ -7,10 +7,11 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Cantos">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Contador de Cantos</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="stylesheet" href="styles.css">
   <script type="module" src="app.js"></script>
 </head>
@@ -18,7 +19,10 @@
   <main class="app">
     <header class="topbar">
       <h1>Contador de Cantos</h1>
-      <span id="wake" class="wake" data-state="off" title="Mantém a tela do celular ligada">Tela ligada</span>
+      <div class="top-actions">
+        <button type="button" id="install" class="install" hidden>⬇ Instalar</button>
+        <span id="wake" class="wake" data-state="off" title="Mantém a tela do celular ligada">Tela ligada</span>
+      </div>
     </header>
 
     <section class="setup">
@@ -70,6 +74,19 @@
     <strong id="toastTitle">1º VISTO</strong>
     <span id="toastText">50 cantos · 03:12</span>
   </div>
+
+  <dialog id="iosHelp" class="confirm">
+    <form method="dialog">
+      <p><strong>Instalar no iPhone</strong></p>
+      <ol class="steps">
+        <li>Abra este site no <b>Safari</b>.</li>
+        <li>Toque no botão <b>Compartilhar</b> (o quadrado com a seta para cima).</li>
+        <li>Toque em <b>Adicionar à Tela de Início</b>.</li>
+      </ol>
+      <p>Depois, abra pelo ícone <b>Cantos</b>: ele abre sem a barra do navegador.</p>
+      <div class="row"><button value="ok" class="btn primary">Entendi</button></div>
+    </form>
+  </dialog>
 
   <dialog id="confirm" class="confirm">
     <form method="dialog">

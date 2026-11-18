@@ -12,6 +12,7 @@ const el = {
   durations: [...document.querySelectorAll('.duration button')],
   vistoSteps: [...document.querySelectorAll('.visto-step button')],
   vistoList: $('vistoList'), toast: $('toast'), toastTitle: $('toastTitle'), toastText: $('toastText'),
+  install: $('install'), iosHelp: $('iosHelp'),
 };
 
 let s = load() ?? L.createSession(15);
@@ -59,11 +60,56 @@ document.addEventListener('visibilitychange', () => {
 });
 document.addEventListener('pointerdown', keepScreenOn, { capture: true });
 
+// ---------- instalar e tela cheia ----------
+const isInstalled = () => matchMedia('(display-mode: standalone)').matches
+  || matchMedia('(display-mode: fullscreen)').matches || navigator.standalone === true;
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
+  || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+let installEvent = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  installEvent = e;
+  if (!isInstalled()) el.install.hidden = false;
+});
+window.addEventListener('appinstalled', () => { installEvent = null; el.install.hidden = true; });
+if (isIOS && !isInstalled()) el.install.hidden = false;
+
+el.install.addEventListener('click', async () => {
+  if (installEvent) {
+    installEvent.prompt();
+    const { outcome } = await installEvent.userChoice;
+    installEvent = null;
+    if (outcome === 'accepted') el.install.hidden = true;
+  } else if (isIOS) {
+    el.iosHelp.showModal();
+  }
+});
+
+// No navegador (sem instalar), entra em tela cheia ao tocar em +1 ou Iniciar.
+// Precisa ser no "soltar o dedo": é aí que o navegador libera tela cheia e som.
+function goFullscreen() {
+  const root = document.documentElement;
+  if (isInstalled() || document.fullscreenElement || !root.requestFullscreen) return;
+  root.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
+}
+el.plus.addEventListener('pointerup', goFullscreen);
+el.startPause.addEventListener('pointerup', goFullscreen);
+
 // ---------- som e vibração ----------
 let audio = null;
-function beep(freq = 880, ms = 180, times = 1) {
+function unlockAudio() {
   try {
     audio ??= new (window.AudioContext || window.webkitAudioContext)();
+    if (audio.state === 'suspended') audio.resume();
+  } catch { /* sem áudio */ }
+}
+document.addEventListener('pointerup', unlockAudio, { capture: true });
+document.addEventListener('keydown', unlockAudio, { capture: true });
+
+function beep(freq = 880, ms = 180, times = 1) {
+  try {
+    if (!audio) return;
     for (let i = 0; i < times; i++) {
       const t = audio.currentTime + i * (ms / 1000 + 0.12);
       const o = audio.createOscillator();
@@ -143,7 +189,7 @@ el.bird.addEventListener('keydown', (e) => { if (e.key === 'Enter') el.bird.blur
 
 // Teclado ou controle Bluetooth (passador de slides), se alguém usar.
 document.addEventListener('keydown', (e) => {
-  if (e.target === el.bird || el.confirm.open || e.repeat) return;
+  if (e.target === el.bird || el.confirm.open || el.iosHelp.open || e.repeat) return;
   if ([' ', 'Enter', 'ArrowUp', 'ArrowRight', 'PageDown', '+'].includes(e.key)) { e.preventDefault(); plus(); }
   else if (['Backspace', 'ArrowDown', 'ArrowLeft', 'PageUp', '-'].includes(e.key)) { e.preventDefault(); minus(); }
 });
