@@ -73,7 +73,9 @@ window.addEventListener('beforeinstallprompt', (e) => {
   if (!isInstalled()) el.install.hidden = false;
 });
 window.addEventListener('appinstalled', () => { installEvent = null; el.install.hidden = true; });
-if (isIOS && !isInstalled()) el.install.hidden = false;
+// Mostra o botão sempre que não estiver instalado; se o navegador não oferecer
+// a instalação automática, o botão explica como instalar pelo menu.
+if (!isInstalled()) el.install.hidden = false;
 
 el.install.addEventListener('click', async () => {
   if (installEvent) {
@@ -81,9 +83,11 @@ el.install.addEventListener('click', async () => {
     const { outcome } = await installEvent.userChoice;
     installEvent = null;
     if (outcome === 'accepted') el.install.hidden = true;
-  } else if (isIOS) {
-    el.iosHelp.showModal();
+    return;
   }
+  el.iosHelp.querySelector('.help-ios').hidden = !isIOS;
+  el.iosHelp.querySelector('.help-android').hidden = isIOS;
+  el.iosHelp.showModal();
 });
 
 // No navegador (sem instalar), entra em tela cheia ao tocar em +1 ou Iniciar.
@@ -300,5 +304,15 @@ keepScreenOn();
 setInterval(loop, 200);
 
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
+  // Quando uma versão nova do app assume, recarrega uma vez (a contagem fica salva).
+  const hadController = !!navigator.serviceWorker.controller;
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController || reloaded) return;
+    reloaded = true;
+    location.reload();
+  });
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
+    .then((reg) => reg.update())
+    .catch(() => {});
 }
