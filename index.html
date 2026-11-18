@@ -3,14 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-  <meta name="theme-color" content="#0e3b37">
+  <meta name="theme-color" content="#000000">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Cantos">
+  <meta name="apple-mobile-web-app-title" content="Contador Strike">
+  <meta name="application-name" content="Contador Strike">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Contador de Cantos</title>
+  <title>Contador Cantos - Criatório Strike</title>
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="icon" href="icon-192.png" type="image/png">
   <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="stylesheet" href="styles.css">
   <script type="module" src="app.js"></script>
@@ -18,7 +19,10 @@
 <body>
   <main class="app">
     <header class="topbar">
-      <h1>Contador de Cantos</h1>
+      <div class="brand">
+        <img src="logo-96.png" alt="" width="34" height="34">
+        <h1>Contador Cantos<small>Criatório Strike</small></h1>
+      </div>
       <div class="top-actions">
         <button type="button" id="install" class="install" hidden>⬇ Instalar</button>
         <span id="wake" class="wake" data-state="off" title="Mantém a tela do celular ligada">Tela ligada</span>
@@ -93,7 +97,7 @@
           <li>Toque em <b>Instalar app</b> ou <b>Adicionar à tela inicial</b>.</li>
         </ol>
       </div>
-      <p>Depois, abra pelo ícone <b>Cantos</b> na tela inicial: ele abre em tela cheia.</p>
+      <p>Depois, abra pelo ícone <b>Contador Strike</b> na tela inicial: ele abre em tela cheia.</p>
       <div class="row"><button value="ok" class="btn primary">Entendi</button></div>
     </form>
   </dialog>

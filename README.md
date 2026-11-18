@@ -1,6 +1,6 @@
-# Contador de Cantos
+# Contador Cantos - Criatório Strike
 
-Site para contar cantos de pássaros em torneios, direto no celular.
+Site para contar cantos de pássaros em torneios, direto no celular. Instalado, aparece na tela inicial como **Contador Strike**.
 
 - Botão grande **+1** e botão **−1** para corrigir
 - Cronômetro de **10 ou 15 minutos**

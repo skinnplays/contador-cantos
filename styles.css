@@ -65,13 +65,19 @@ button { font: inherit; color: inherit; touch-action: manipulation; }
 }
 
 .topbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.brand { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.brand img { flex: none; width: 34px; height: 34px; }
 .topbar h1 {
-  font-size: 1.05rem; margin: 0; letter-spacing: .2px;
+  font-size: 1rem; margin: 0; letter-spacing: .2px; line-height: 1.15;
   min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+.topbar h1 small {
+  display: block; font-size: .68rem; font-weight: 600; letter-spacing: 1.2px;
+  text-transform: uppercase; color: var(--muted);
+}
 @media (max-width: 380px) {
-  .topbar h1 { font-size: .95rem; }
-  .wake { padding: 4px 8px; }
+  .topbar h1 { font-size: .92rem; }
+  .brand img { width: 30px; height: 30px; }
 }
 
 .top-actions { display: flex; align-items: center; gap: 6px; }
@@ -242,4 +248,10 @@ button { font: inherit; color: inherit; touch-action: manipulation; }
   .stat strong { font-size: 1.5rem; }
   .cell .c { font-size: 1rem; }
   .controls { min-height: 170px; }
+}
+
+/* Telas estreitas: o indicador de tela ligada vira só a bolinha colorida. */
+@media (max-width: 380px) {
+  .wake { font-size: 0; padding: 7px 9px; }
+  .wake::before { font-size: .8rem; margin: 0; }
 }

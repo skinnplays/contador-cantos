@@ -1,20 +1,19 @@
 {
   "id": "./",
-  "name": "Contador de Cantos",
-  "short_name": "Cantos",
-  "description": "Contagem de cantos de pássaros em torneios, com previsão, vistos e registro minuto a minuto.",
+  "name": "Contador Cantos - Criatório Strike",
+  "short_name": "Contador Strike",
+  "description": "Contagem de cantos de pássaros em torneios, com previsão, vistos e registro minuto a minuto. Criatório Strike.",
   "lang": "pt-BR",
   "start_url": "./",
   "scope": "./",
   "display": "fullscreen",
   "display_override": ["fullscreen", "standalone"],
   "orientation": "portrait",
-  "background_color": "#0b1f1d",
-  "theme_color": "#0e3b37",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "icons": [
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
-    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

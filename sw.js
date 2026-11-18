@@ -1,9 +1,9 @@
 // Busca sempre a versão mais nova na internet. Sem sinal (ou se demorar mais de 4 s),
 // usa a cópia guardada, assim o app funciona offline e as atualizações chegam na hora.
-const CACHE = 'contador-cantos-v5';
+const CACHE = 'contador-cantos-v6';
 const ASSETS = [
   './', 'index.html', 'styles.css', 'app.js', 'logic.js', 'manifest.webmanifest',
-  'icon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png',
+  'logo-96.png', 'icon-180.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png',
 ];
 const TIMEOUT_MS = 4000;
 
