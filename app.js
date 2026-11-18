@@ -12,8 +12,23 @@ const el = {
   durations: [...document.querySelectorAll('.duration button')],
   vistoSteps: [...document.querySelectorAll('.visto-step button')],
   vistoList: $('vistoList'), toast: $('toast'), toastTitle: $('toastTitle'), toastText: $('toastText'),
-  install: $('install'), iosHelp: $('iosHelp'),
+  install: $('install'), iosHelp: $('iosHelp'), swap: $('swap'),
 };
+
+// ---------- posição dos botões (preferência de cada celular) ----------
+const LAYOUT_KEY = 'contador-cantos.botoes-no-meio';
+let controlsUp = false;
+try { controlsUp = localStorage.getItem(LAYOUT_KEY) === '1'; } catch { /* sem armazenamento */ }
+function applyLayout() {
+  document.querySelector('.app').classList.toggle('controls-up', controlsUp);
+  el.swap.setAttribute('aria-pressed', String(controlsUp));
+}
+applyLayout();
+el.swap.addEventListener('click', () => {
+  controlsUp = !controlsUp;
+  applyLayout();
+  try { localStorage.setItem(LAYOUT_KEY, controlsUp ? '1' : '0'); } catch { /* sem armazenamento */ }
+});
 
 let s = load() ?? L.createSession(15);
 let warnedLastMinute = false;

@@ -255,3 +255,9 @@ button { font: inherit; color: inherit; touch-action: manipulation; }
   .wake { font-size: 0; padding: 7px 9px; }
   .wake::before { font-size: .8rem; margin: 0; }
 }
+
+/* Botões no meio: a área de contagem sobe e a grade de minutos desce. */
+.btn.swap { flex: 0 0 52px; padding: 0; font-size: 1.4rem; line-height: 1; }
+.btn.swap[aria-pressed="true"] { border-color: var(--brand); color: var(--brand); }
+.app.controls-up .controls { order: 1; }
+.app.controls-up .minutes { order: 2; }
