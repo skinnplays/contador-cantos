@@ -319,3 +319,69 @@ html, body { height: 100%; overflow: hidden; }
 /* janelas (aviso de produto, convite, instruções) rolam por dentro se não couberem */
 .confirm { max-height: 92dvh; overflow-y: auto; }
 .offer-img { max-height: min(200px, 24dvh); }
+
+/* ---------- Acabamento (revisão de design) ---------- */
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+/* Áreas de toque de pelo menos ~44px sem mudar o tamanho visual */
+.install, .duration button, .visto-step button { position: relative; }
+.install::after, .duration button::after, .visto-step button::after {
+  content: ""; position: absolute; inset: -8px -2px;
+}
+
+/* Toque com resposta física também nos outros botões */
+.btn { transition-property: transform, filter, background-color, box-shadow; transition-duration: .08s; transition-timing-function: ease-out; }
+.btn:not(.plus):active:not(:disabled) { transform: scale(.96); }
+.duration button:active, .visto-step button:active { transform: scale(.94); }
+
+/* Janelas (produto, notificações, zerar) entram suavemente */
+dialog[open] { animation: dlg-in .18s ease-out; }
+dialog[open]::backdrop { animation: fade-in .18s ease-out; }
+@keyframes dlg-in { from { opacity: 0; transform: translateY(8px) scale(.98); } }
+@keyframes fade-in { from { opacity: 0; } }
+
+/* Quebra de linha mais bonita nos textos curtos */
+.offer-name { text-wrap: balance; }
+.offer-text, .confirm p { text-wrap: pretty; }
+
+/* Foto do produto com contorno neutro para não sumir no fundo branco */
+.offer-img { outline: 1px solid rgba(0, 0, 0, .08); outline-offset: -1px; }
+@media (prefers-color-scheme: dark) { .offer-img { outline-color: rgba(255, 255, 255, .12); } }
+
+/* Respeita quem desativou animações no celular */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; transition-duration: 1ms !important; }
+}
+
+/* ---------- Celular deitado: duas colunas, botões à direita ---------- */
+@media (orientation: landscape) and (max-height: 560px) {
+  .app {
+    max-width: none;
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    grid-auto-rows: min-content;
+    align-content: start;
+    column-gap: 12px;
+    padding-left: max(14px, env(safe-area-inset-left));
+    padding-right: max(14px, env(safe-area-inset-right));
+  }
+  .app > :not(.controls) { grid-column: 1; }
+  .app .controls, .app.controls-up .controls {
+    grid-column: 2; grid-row: 1 / span 6; height: 100%; min-height: 0;
+  }
+  .timer { font-size: clamp(2rem, 11dvh, 3.4rem); }
+  .stat strong { font-size: clamp(1.1rem, 6dvh, 1.6rem); }
+  .cell .m { font-size: .58rem; }
+  .cell .c { font-size: clamp(.8rem, 3.6dvh, 1rem); }
+  .plus-big { font-size: clamp(2.6rem, 16dvh, 4.5rem); }
+}
+@media (orientation: landscape) and (max-height: 400px) {
+  .app { row-gap: 4px; padding-top: max(4px, env(safe-area-inset-top)); padding-bottom: max(4px, env(safe-area-inset-bottom)); }
+  .brand img { width: 26px; height: 26px; }
+  .topbar h1 small { display: none; }
+  .bird { padding-block: 4px; }
+  .timer-card { padding: 2px 12px 4px; }
+  .stat { padding: 2px 6px; }
+  .stat .label { font-size: .62rem; }
+  .cell { padding: 1px 0 2px; }
+}
