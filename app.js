@@ -416,7 +416,7 @@ function prepareShare() {
 }
 function shareText() {
   const name = s.bird.trim() || 'Meu pássaro';
-  return `🔥 ${name} fez ${s.events.length} cantos em ${s.durationMin} minutos!\nContado com o Contador Strike: https://contadorstrike.app`;
+  return `🔥 ${name} fez ${s.events.length} cantos em ${s.durationMin} minutos!\nMarcado com o Contador Strike: https://contadorstrike.app`;
 }
 function downloadFile(file) {
   const url = URL.createObjectURL(file);
