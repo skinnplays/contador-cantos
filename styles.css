@@ -384,3 +384,7 @@ dialog[open]::backdrop { animation: fade-in .18s ease-out; }
   .stat .label { font-size: .62rem; }
   .cell { padding: 1px 0 2px; }
 }
+
+/* Botão Compartilhar (aparece no fim da roda, no lugar do Zerar) */
+.btn.share { flex: 2; background: var(--accent); color: var(--accent-ink); }
+.btn.share { white-space: nowrap; }

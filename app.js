@@ -1,5 +1,6 @@
 import * as L from './logic.js';
-import { pickOffer } from './offers.js';
+import { pickOffer, tierFor } from './offers.js';
+import { renderShareImage } from './share.js';
 
 const KEY = 'contador-cantos.sessao.v1';
 const $ = (id) => document.getElementById(id);
@@ -281,7 +282,7 @@ function buildMinutes() {
 let vistoKey = '';
 function renderVistos(vs) {
   const missing = L.cantosToNextVisto(s);
-  const key = `${s.vistoStep}|${vs.length}|${missing}`;
+  const key = `${s.vistoStep}|${vs.length}|${missing}|${s.finished}`;
   if (key === vistoKey) return;
   vistoKey = key;
   el.vistoSteps.forEach((b) => b.setAttribute('aria-checked', String(Number(b.dataset.step) === s.vistoStep)));
@@ -341,6 +342,9 @@ function render() {
   el.plus.disabled = s.finished;
   el.minus.disabled = s.events.length === 0;
   el.reset.disabled = !started;
+  el.reset.hidden = s.finished;
+  shareBtn.hidden = !s.finished;
+  if (s.finished) prepareShare();
   el.durations.forEach((b) => {
     b.setAttribute('aria-checked', String(Number(b.dataset.min) === s.durationMin));
     b.disabled = started;
@@ -362,7 +366,10 @@ function showOffer() {
   seen[p.id] = Date.now();
   try { localStorage.setItem(OFFERS_SEEN_KEY, JSON.stringify(seen)); } catch { /* sem armazenamento */ }
 
-  $('offerResult').textContent = `Resultado: ${total} cantos em ${s.durationMin} minutos. Seu pássaro pode render mais!`;
+  const hint = tierFor(s.durationMin, total) === 'saude'
+    ? 'Pássaro cantando pouco pode estar em muda ou precisando de reforço.'
+    : 'Seu pássaro pode render mais!';
+  $('offerResult').textContent = `Resultado: ${total} cantos em ${s.durationMin} minutos. ${hint}`;
   $('offerName').textContent = p.name;
   $('offerText').textContent = p.text || '';
   const img = $('offerImg');
@@ -378,6 +385,65 @@ function showOffer() {
 $('offerLink').addEventListener('click', () => {
   if (offerShown) track(`produto-${offerShown.id}-clicou`);
   offerDlg.close();
+});
+
+// ---------- compartilhar resultado (imagem para WhatsApp/Instagram) ----------
+// A imagem é preparada assim que a roda termina, para o compartilhamento abrir
+// na hora do toque (o iPhone exige que seja direto no toque).
+const shareBtn = $('share');
+let shareKey = '';
+let shareFile = null;
+let sharePending = null;
+function shareData() {
+  return {
+    bird: s.bird, total: s.events.length, durationMin: s.durationMin,
+    avg: s.events.length / s.durationMin, vistos: L.vistos(s), vistoStep: s.vistoStep,
+    perMinute: L.perMinute(s), date: new Date(),
+  };
+}
+function prepareShare() {
+  const key = `${s.events.length}|${s.bird}|${s.durationMin}|${s.vistoStep}`;
+  if (key === shareKey) return sharePending;
+  shareKey = key;
+  shareFile = null;
+  sharePending = renderShareImage(shareData())
+    .then((blob) => {
+      if (key === shareKey) shareFile = new File([blob], 'contador-strike-resultado.png', { type: 'image/png' });
+      return shareFile;
+    })
+    .catch(() => null);
+  return sharePending;
+}
+function shareText() {
+  const name = s.bird.trim() || 'Meu pássaro';
+  return `🔥 ${name} fez ${s.events.length} cantos em ${s.durationMin} minutos!\nContado com o Contador Strike: https://contadorstrike.app`;
+}
+function downloadFile(file) {
+  const url = URL.createObjectURL(file);
+  const a = document.createElement('a');
+  a.href = url; a.download = file.name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+shareBtn.addEventListener('click', async () => {
+  track('compartilhar-clique');
+  const file = shareFile || await prepareShare();
+  const text = shareText();
+  try {
+    if (file && navigator.canShare?.({ files: [file] })) {
+      await navigator.share({ files: [file], text });
+      track('compartilhar-imagem');
+    } else if (navigator.share) {
+      await navigator.share({ text });
+      track('compartilhar-texto');
+    } else if (file) {
+      downloadFile(file);
+      track('compartilhar-download');
+    }
+  } catch (err) {
+    // cancelado pela pessoa: não faz nada; outro erro: baixa a imagem
+    if (err?.name !== 'AbortError' && file) downloadFile(file);
+  }
 });
 
 // ---------- convite para notificações (OneSignal) ----------

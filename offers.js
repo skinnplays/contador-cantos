@@ -7,12 +7,23 @@
 //   link:   endereço da loja / catálogo do WhatsApp
 //   image:  foto do produto: arquivo na pasta "produtos" ou endereço da imagem (opcional)
 //   cta:    texto do botão (opcional; padrão "Ver produto")
-//   durations: em quais provas aparece ([10], [15] ou [10, 15])
+//   durations: em quais rodas aparece ([10], [15] ou [10, 15])
+//   tiers:  faixa de resultado: ['saude'], ['energia'] ou as duas
 //
 // Com a lista vazia, o aviso nunca aparece.
 
 // Aparece quando o total de cantos fica entre 0 e "max" (inclusive).
-export const LIMITS = { 10: { max: 80 }, 15: { max: 140 } };
+// Faixas: de 0 até "low" = "saude" (pássaro parado: muda, saúde, vitaminas);
+//         de low+1 até max = "energia" (pássaro bem, mas pode render mais).
+// Cada produto diz em quais faixas aparece em `tiers` (sem `tiers` = nas duas).
+// Se uma faixa ficar sem produto, usa qualquer produto da roda.
+export const LIMITS = { 10: { max: 80, low: 40 }, 15: { max: 140, low: 60 } };
+
+export function tierFor(durationMin, total, limits = LIMITS) {
+  const l = limits[durationMin];
+  if (!l || total < 0 || total > l.max) return null;
+  return total <= l.low ? 'saude' : 'energia';
+}
 
 export const PRODUCTS = [
   {
@@ -23,6 +34,7 @@ export const PRODUCTS = [
     image: 'https://http2.mlstatic.com/D_NQ_NP_2X_848048-MLB99261528580_112025-F-kit-dextrotonic-e-omniform-importado--fracionado.webp',
     cta: 'Ver no Mercado Livre',
     durations: [10, 15],
+    tiers: ['energia'],
   },
   {
     id: 'nekton-booster',
@@ -32,6 +44,7 @@ export const PRODUCTS = [
     image: 'https://http2.mlstatic.com/D_NQ_NP_2X_639833-MLA99367445540_112025-F.webp',
     cta: 'Ver no Mercado Livre',
     durations: [10, 15],
+    tiers: ['energia'],
   },
   {
     id: 'nekton-e',
@@ -41,6 +54,7 @@ export const PRODUCTS = [
     image: 'https://http2.mlstatic.com/D_NQ_NP_2X_674813-MLA99874727303_112025-F.webp',
     cta: 'Ver no Mercado Livre',
     durations: [10, 15],
+    tiers: ['saude'],
   },
   {
     id: 'raff-patee-frutas',
@@ -50,6 +64,7 @@ export const PRODUCTS = [
     image: 'https://http2.mlstatic.com/D_NQ_NP_2X_933841-MLB115128682495_072026-F-farinhada-italiana-patee-frutas-raff-realpasto--1-kg.webp',
     cta: 'Ver no Mercado Livre',
     durations: [10, 15],
+    tiers: ['energia', 'saude'],
   },
   {
     id: 'nutribird-unikomplet',
@@ -59,6 +74,7 @@ export const PRODUCTS = [
     image: 'https://http2.mlstatic.com/D_NQ_NP_2X_900198-MLB97533290072_112025-F-nutribird-unikomplet-versele-laga-1-kg.webp',
     cta: 'Ver no Mercado Livre',
     durations: [10, 15],
+    tiers: ['energia', 'saude'],
   },
   {
     id: 'racao-coleiro-almeidas',
@@ -68,6 +84,7 @@ export const PRODUCTS = [
     image: 'https://http2.mlstatic.com/D_NQ_NP_2X_619020-MLB116712400934_092026-F-racao-coleiro--performance-500g-almeidas.webp',
     cta: 'Ver no Mercado Livre',
     durations: [10, 15],
+    tiers: ['energia'],
   },
   {
     id: 'selecao-coleiro',
@@ -77,6 +94,7 @@ export const PRODUCTS = [
     image: 'icon-512.png',
     cta: 'Ver a seleção',
     durations: [10, 15],
+    tiers: ['saude', 'energia'],
   },
   // {
   //   id: 'vitamina-x',
@@ -92,9 +110,11 @@ export const PRODUCTS = [
 // (na ordem da lista); se já viu todos, o que foi visto há mais tempo.
 // `seen` = { [id]: horário em que foi mostrado }. Não usa nenhum dado pessoal.
 export function pickOffer(durationMin, total, seen = {}, products = PRODUCTS, limits = LIMITS) {
-  const limit = limits[durationMin];
-  if (!limit || total < 0 || total > limit.max) return null;
-  const eligible = products.filter((p) => !p.durations || p.durations.includes(durationMin));
+  const tier = tierFor(durationMin, total, limits);
+  if (!tier) return null;
+  const byDuration = products.filter((p) => !p.durations || p.durations.includes(durationMin));
+  const byTier = byDuration.filter((p) => !p.tiers || p.tiers.includes(tier));
+  const eligible = byTier.length ? byTier : byDuration;
   if (eligible.length === 0) return null;
   const unseen = eligible.find((p) => !seen[p.id]);
   if (unseen) return unseen;
