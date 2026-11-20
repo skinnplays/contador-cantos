@@ -27,7 +27,7 @@ export const PRODUCTS = [
   {
     id: 'nekton-booster',
     name: 'Nekton Booster',
-    text: 'Suplemento da alemã Nekton, referência entre criadores, para mais vigor e disposição na próxima roda.',
+    text: 'Suplemento da Alemanha, marca Nekton, referência entre criadores, para mais vigor e disposição na próxima roda.',
     link: 'https://meli.la/1DFPXTm',
     image: 'https://http2.mlstatic.com/D_NQ_NP_2X_639833-MLA99367445540_112025-F.webp',
     cta: 'Ver no Mercado Livre',
