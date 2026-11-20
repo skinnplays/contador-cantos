@@ -1,4 +1,5 @@
 import * as L from './logic.js';
+import { pickOffer } from './offers.js';
 
 const KEY = 'contador-cantos.sessao.v1';
 const $ = (id) => document.getElementById(id);
@@ -256,7 +257,7 @@ el.bird.addEventListener('keydown', (e) => { if (e.key === 'Enter') el.bird.blur
 
 // Teclado ou controle Bluetooth (passador de slides), se alguém usar.
 document.addEventListener('keydown', (e) => {
-  if (e.target === el.bird || el.confirm.open || el.iosHelp.open || e.repeat) return;
+  if (e.target === el.bird || el.confirm.open || el.iosHelp.open || offerDlg.open || e.repeat) return;
   if ([' ', 'Enter', 'ArrowUp', 'ArrowRight', 'PageDown', '+'].includes(e.key)) { e.preventDefault(); plus(); }
   else if (['Backspace', 'ArrowDown', 'ArrowLeft', 'PageUp', '-'].includes(e.key)) { e.preventDefault(); minus(); }
 });
@@ -346,6 +347,36 @@ function render() {
   });
 }
 
+// ---------- sugestão de produto ao fim da prova ----------
+const OFFERS_SEEN_KEY = 'contador-cantos.anuncios-vistos';
+const offerDlg = $('offer');
+let offerShown = null;
+function showOffer() {
+  let seen = {};
+  try { seen = JSON.parse(localStorage.getItem(OFFERS_SEEN_KEY)) || {}; } catch { /* sem armazenamento */ }
+  const total = s.events.length;
+  const p = pickOffer(s.durationMin, total, seen);
+  if (!p) return;
+  offerShown = p;
+  seen[p.id] = Date.now();
+  try { localStorage.setItem(OFFERS_SEEN_KEY, JSON.stringify(seen)); } catch { /* sem armazenamento */ }
+
+  $('offerResult').textContent = `Resultado: ${total} cantos em ${s.durationMin} minutos.`;
+  $('offerName').textContent = p.name;
+  $('offerText').textContent = p.text || '';
+  const img = $('offerImg');
+  img.hidden = !p.image;
+  if (p.image) { img.src = p.image; img.alt = p.name; }
+  $('offerLink').href = p.link;
+  track(`produto-${p.id}-mostrou`);
+  // espera o alerta de fim de tempo antes de abrir
+  setTimeout(() => { if (!offerDlg.open) offerDlg.showModal(); }, 1500);
+}
+$('offerLink').addEventListener('click', () => {
+  if (offerShown) track(`produto-${offerShown.id}-clicou`);
+  offerDlg.close();
+});
+
 function loop() {
   const now = Date.now();
   const next = L.tick(s, now);
@@ -354,6 +385,7 @@ function loop() {
     save();
     vibrate([300, 120, 300, 120, 300]);
     beep(660, 350, 3);
+    if (s.finished) showOffer();
   } else if (L.isRunning(s) && !warnedLastMinute && s.durationMin * L.MS_MIN - L.elapsedMs(s, now) <= L.MS_MIN) {
     warnedLastMinute = true;
     vibrate([120, 80, 120]);
