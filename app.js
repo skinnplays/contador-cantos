@@ -336,7 +336,7 @@ function render() {
     cell.classList.toggle('future', !reached || (!started && i === 0));
   });
 
-  el.startPause.textContent = s.finished ? 'Nova prova' : running ? 'Pausar' : started ? 'Continuar' : 'Iniciar';
+  el.startPause.textContent = s.finished ? 'Nova roda' : running ? 'Pausar' : started ? 'Continuar' : 'Iniciar';
   el.forecastLabel.textContent = s.finished ? 'Resultado' : 'Previsão';
   el.plus.disabled = s.finished;
   el.minus.disabled = s.events.length === 0;
@@ -361,13 +361,14 @@ function showOffer() {
   seen[p.id] = Date.now();
   try { localStorage.setItem(OFFERS_SEEN_KEY, JSON.stringify(seen)); } catch { /* sem armazenamento */ }
 
-  $('offerResult').textContent = `Resultado: ${total} cantos em ${s.durationMin} minutos.`;
+  $('offerResult').textContent = `Resultado: ${total} cantos em ${s.durationMin} minutos. Seu pássaro pode render mais!`;
   $('offerName').textContent = p.name;
   $('offerText').textContent = p.text || '';
   const img = $('offerImg');
   img.hidden = !p.image;
   if (p.image) { img.src = p.image; img.alt = p.name; }
   $('offerLink').href = p.link;
+  $('offerLink').textContent = p.cta || 'Ver produto';
   track(`produto-${p.id}-mostrou`);
   // espera o alerta de fim de tempo antes de abrir
   setTimeout(() => { if (!offerDlg.open) offerDlg.showModal(); }, 1500);

@@ -5,7 +5,8 @@
 //   name:   nome do produto
 //   text:   1 ou 2 frases
 //   link:   endereço da loja / catálogo do WhatsApp
-//   image:  arquivo da foto dentro da pasta "produtos" (opcional)
+//   image:  foto do produto: arquivo na pasta "produtos" ou endereço da imagem (opcional)
+//   cta:    texto do botão (opcional; padrão "Ver produto")
 //   durations: em quais provas aparece ([10], [15] ou [10, 15])
 //
 // Com a lista vazia, o aviso nunca aparece.
@@ -14,6 +15,15 @@
 export const LIMITS = { 10: { max: 80 }, 15: { max: 140 } };
 
 export const PRODUCTS = [
+  {
+    id: 'dextrotonic-omniform',
+    name: 'Kit Dextrotonic + Omniform',
+    text: 'Energia e vitaminas para o seu pássaro chegar mais disposto na próxima roda. Kit importado, fracionado — pronto para usar.',
+    link: 'https://meli.la/1cTT6z8',
+    image: 'https://http2.mlstatic.com/D_NQ_NP_2X_848048-MLB99261528580_112025-F-kit-dextrotonic-e-omniform-importado--fracionado.webp',
+    cta: 'Ver no Mercado Livre',
+    durations: [10, 15],
+  },
   // {
   //   id: 'vitamina-x',
   //   name: 'Vitamina X',
