@@ -142,7 +142,36 @@ function beep(freq = 880, ms = 180, times = 1) {
     }
   } catch { /* sem áudio */ }
 }
-const vibrate = (p) => { try { navigator.vibrate?.(p); } catch { /* sem vibração */ } };
+// iPhone (Safari) não tem navigator.vibrate. Desde o iOS 18, acionar um
+// <input type="checkbox" switch> gera um toque háptico do sistema.
+let hapticLabel = null;
+function iosTap() {
+  if (!hapticLabel) {
+    hapticLabel = document.createElement('label');
+    hapticLabel.setAttribute('aria-hidden', 'true');
+    hapticLabel.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0;pointer-events:none';
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.setAttribute('switch', '');
+    input.tabIndex = -1;
+    hapticLabel.appendChild(input);
+    document.body.appendChild(hapticLabel);
+  }
+  hapticLabel.click();
+}
+const canVibrate = typeof navigator.vibrate === 'function';
+function vibrate(p) {
+  try {
+    if (canVibrate) { navigator.vibrate(p); return; }
+    // padrão [vibra, pausa, vibra, ...] -> um toque por trecho de vibração
+    const parts = Array.isArray(p) ? p : [p];
+    let t = 0;
+    for (let i = 0; i < parts.length; i += 2) {
+      if (t === 0) iosTap(); else setTimeout(iosTap, t);
+      t += (parts[i] || 0) + (parts[i + 1] || 0);
+    }
+  } catch { /* sem vibração */ }
+}
 
 // ---------- ações ----------
 function plus() {
