@@ -97,22 +97,39 @@ export async function renderShareImage(d) {
   const nameSize = fitFont(ctx, name, 800, 76, W - pad * 2);
   ctx.font = `800 ${nameSize}px ${FONT}`;
   ctx.textAlign = 'center';
-  ctx.fillText(name, W / 2, 300);
+  ctx.fillText(name, W / 2, 285);
 
   // número grande
   ctx.fillStyle = C.brand;
   const totalTxt = String(d.total);
-  const bigSize = fitFont(ctx, totalTxt, 900, 300, W - pad * 2);
+  const bigSize = fitFont(ctx, totalTxt, 900, 290, W - pad * 2);
   ctx.font = `900 ${bigSize}px ${FONT}`;
-  ctx.fillText(totalTxt, W / 2, 590);
+  ctx.fillText(totalTxt, W / 2, 560);
   ctx.fillStyle = C.text;
-  ctx.font = `700 52px ${FONT}`;
-  ctx.fillText(`cantos em ${d.durationMin} minutos`, W / 2, 670);
+  ctx.font = `700 50px ${FONT}`;
+  ctx.fillText(`cantos em ${d.durationMin} minutos`, W / 2, 632);
+
+  // destaque: melhor minuto
+  const best = Math.max(0, ...d.perMinute);
+  const bestIdx = best > 0 ? d.perMinute.indexOf(best) : -1;
+  if (bestIdx >= 0) {
+    const txt = `⚡ Melhor minuto: ${best} cantos (${bestIdx + 1}º min)`;
+    const fs = fitFont(ctx, txt, 800, 36, W - pad * 2 - 80);
+    ctx.font = `800 ${fs}px ${FONT}`;
+    const pw = ctx.measureText(txt).width + 64;
+    const px = (W - pw) / 2;
+    roundRect(ctx, px, 662, pw, 64, 32);
+    ctx.fillStyle = 'rgba(242,193,78,0.14)';
+    ctx.fill();
+    ctx.strokeStyle = C.accent; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = C.accent;
+    ctx.fillText(txt, W / 2, 706);
+  }
   ctx.textAlign = 'left';
 
   // cartões: média e vistos
-  const cardY = 730;
-  const cardH = 150;
+  const cardY = 760;
+  const cardH = 140;
   const gap = 24;
   const cardW = (W - pad * 2 - gap) / 2;
   const first = d.vistos[0];
@@ -137,13 +154,13 @@ export async function renderShareImage(d) {
     ctx.fillStyle = c.accent ? C.accentInk : C.text;
     const vs = fitFont(ctx, c.value, 800, 56, cardW - 40);
     ctx.font = `800 ${vs}px ${FONT}`;
-    ctx.fillText(c.value, x + cardW / 2, cardY + 118);
+    ctx.fillText(c.value, x + cardW / 2, cardY + 112);
   });
   ctx.textAlign = 'left';
 
   // gráfico minuto a minuto
-  const chartTop = 940;
-  const chartH = 190;
+  const chartTop = 962;
+  const chartH = 180;
   const n = d.perMinute.length;
   const bGap = n > 10 ? 10 : 14;
   const bW = (W - pad * 2 - bGap * (n - 1)) / n;
@@ -159,7 +176,7 @@ export async function renderShareImage(d) {
     ctx.fillStyle = C.surface;
     ctx.fill();
     roundRect(ctx, x, y, bW, h, 10);
-    ctx.fillStyle = C.brand;
+    ctx.fillStyle = i === bestIdx ? C.accent : C.brand;
     ctx.fill();
     ctx.textAlign = 'center';
     ctx.fillStyle = C.muted;
