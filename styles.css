@@ -289,3 +289,33 @@ input, textarea {
 .offer .row .offer-link { flex: 1; white-space: nowrap; }
 .offer .push-privacy { margin: -8px 0 14px; font-size: .8rem; }
 .offer .push-privacy a { color: var(--muted); }
+
+/* ---------- Sem scroll: o app ocupa exatamente a altura da tela ----------
+   Os tamanhos encolhem conforme a altura disponível (dvh = altura visível). */
+html, body { height: 100%; overflow: hidden; }
+.app {
+  height: 100dvh; min-height: 0; overflow: hidden;
+  gap: clamp(5px, 1.2dvh, 10px);
+  padding-top: max(clamp(6px, 1.2dvh, 10px), env(safe-area-inset-top));
+  padding-bottom: max(clamp(6px, 1.4dvh, 12px), env(safe-area-inset-bottom));
+}
+.app > * { flex-shrink: 0; }
+.bird { padding-block: clamp(6px, 1.2dvh, 10px); }
+.timer-card { padding: clamp(4px, .9dvh, 8px) 14px clamp(5px, 1.1dvh, 10px); }
+.timer { font-size: clamp(2.3rem, min(19vw, 8.6dvh), 5.5rem); }
+.progress { margin: clamp(3px, .9dvh, 8px) 0 clamp(2px, .7dvh, 6px); }
+.stat { padding: clamp(3px, .9dvh, 8px) 6px; gap: 0; }
+.stat strong { font-size: clamp(1.2rem, 4dvh, 1.9rem); }
+.visto-step button { padding-block: clamp(4px, .9dvh, 7px); }
+.vchip { padding-block: clamp(4px, .9dvh, 8px); }
+.cell { padding: clamp(1px, .45dvh, 4px) 0 clamp(2px, .55dvh, 5px); }
+.cell .m { font-size: clamp(.58rem, 1.55dvh, .68rem); }
+.cell .c { font-size: clamp(.85rem, 2.5dvh, 1.15rem); line-height: 1.15; }
+.minutes { gap: clamp(3px, .8dvh, 6px); }
+.controls { flex: 1 1 auto; flex-shrink: 1; min-height: 0; gap: clamp(5px, 1dvh, 8px); }
+.controls .row:first-child .btn { padding-block: clamp(7px, 1.5dvh, 12px); }
+.count-row { min-height: 0; }
+.plus-big { font-size: clamp(2.6rem, min(18vw, 8dvh), 5rem); }
+/* janelas (aviso de produto, convite, instruções) rolam por dentro se não couberem */
+.confirm { max-height: 92dvh; overflow-y: auto; }
+.offer-img { max-height: min(200px, 24dvh); }
