@@ -36,7 +36,7 @@
               type: "push",
               autoPrompt: false,
               text: {
-                actionMessage: "Quer receber dicas e ofertas para o seu coleiro? Você pode desativar quando quiser.",
+                actionMessage: "Quer receber dicas e ofertas para o seu pássaro? Você pode desativar quando quiser.",
                 acceptButton: "Inscrever-se",
                 cancelButton: "Agora não",
               },
@@ -157,11 +157,43 @@
       <p class="offer-result" id="pushResult"></p>
       <p class="offer-tag">Criatório Strike</p>
       <h2 class="offer-name">🔔 Quer receber dicas e ofertas?</h2>
-      <p class="offer-text">Avisamos no celular sobre cuidados com o coleiro e promoções de rações e suplementos. No máximo 1 ou 2 por semana, e você pode desativar quando quiser.</p>
+      <p class="offer-text">Avisamos no celular sobre cuidados com o seu pássaro e promoções de rações e suplementos. No máximo 1 ou 2 por semana, e você pode desativar quando quiser.</p>
       <p class="push-privacy"><a href="privacidade.html" target="_blank" rel="noopener">Política de privacidade</a></p>
       <div class="row">
         <button type="button" id="pushNo" class="btn ghost">Agora não</button>
         <button type="button" id="pushYes" class="btn primary offer-link">Quero receber</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="arte" class="confirm arte">
+    <form method="dialog">
+      <h2 class="arte-title">Monte sua arte</h2>
+      <div class="arte-preview">
+        <img id="artePreview" alt="Prévia da arte do resultado" width="1080" height="1350">
+        <span class="arte-loading">Gerando arte…</span>
+      </div>
+      <div class="tema-row" role="radiogroup" aria-label="Tema da arte">
+        <button type="button" class="tema-btn" role="radio" data-tema="ouro">Ouro</button>
+        <button type="button" class="tema-btn" role="radio" data-tema="esmeralda">Esmeralda</button>
+        <button type="button" class="tema-btn" role="radio" data-tema="prata">Prata</button>
+        <button type="button" class="tema-btn" role="radio" data-tema="fogo">Fogo</button>
+      </div>
+      <label class="arte-field"><span>Nome do pássaro</span>
+        <input id="arteBird" type="text" maxlength="40" autocomplete="off" enterkeyhint="done"></label>
+      <label class="arte-field"><span>Espécie</span>
+        <select id="arteEspecie"></select></label>
+      <label class="arte-field" id="arteOutraWrap" hidden><span>Qual espécie?</span>
+        <input id="arteEspecieOutra" type="text" maxlength="24" autocomplete="off" enterkeyhint="done"></label>
+      <label class="arte-field"><span>Proprietário <em>(opcional)</em></span>
+        <input id="arteOwner" type="text" maxlength="40" autocomplete="off" enterkeyhint="done"></label>
+      <label class="arte-field"><span>Plantel / criatório <em>(opcional)</em></span>
+        <input id="artePlantel" type="text" maxlength="40" autocomplete="off" enterkeyhint="done"></label>
+      <label class="arte-field"><span>Cidade <em>(opcional)</em></span>
+        <input id="arteCidade" type="text" maxlength="32" autocomplete="off" enterkeyhint="done"></label>
+      <div class="row">
+        <button value="close" class="btn ghost">Fechar</button>
+        <button type="button" id="arteShare" class="btn share">Compartilhar arte</button>
       </div>
     </form>
   </dialog>

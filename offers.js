@@ -9,6 +9,7 @@
 //   cta:    texto do botão (opcional; padrão "Ver produto")
 //   durations: em quais rodas aparece ([10], [15] ou [10, 15])
 //   tiers:  faixa de resultado: ['saude'], ['energia'] ou as duas
+//   species: só para essas espécies (ex.: ['Coleiro']); sem species = serve para todas
 //
 // Com a lista vazia, o aviso nunca aparece.
 
@@ -17,6 +18,10 @@
 //         de low+1 até max = "energia" (pássaro bem, mas pode render mais).
 // Cada produto diz em quais faixas aparece em `tiers` (sem `tiers` = nas duas).
 // Se uma faixa ficar sem produto, usa qualquer produto da roda.
+// Espécies que marcam em roda de canto (aparecem na arte e filtram os produtos).
+export const SPECIES = ['Coleiro', 'Trinca-ferro', 'Canário-da-terra', 'Tiziu', 'Cardeal', 'Curió', 'Bicudo',
+  'Azulão', 'Pintassilgo', 'Sabiá', 'Galo-de-campina'];
+
 export const LIMITS = { 10: { max: 80, low: 40 }, 15: { max: 140, low: 60 } };
 
 export function tierFor(durationMin, total, limits = LIMITS) {
@@ -84,6 +89,7 @@ export const PRODUCTS = [
     image: 'https://http2.mlstatic.com/D_NQ_NP_2X_619020-MLB116712400934_092026-F-racao-coleiro--performance-500g-almeidas.webp',
     cta: 'Ver no Mercado Livre',
     durations: [10, 15],
+    species: ['Coleiro'],
     tiers: ['energia'],
   },
   {
@@ -94,6 +100,7 @@ export const PRODUCTS = [
     image: 'icon-512.png',
     cta: 'Ver a seleção',
     durations: [10, 15],
+    species: ['Coleiro'],
     tiers: ['saude', 'energia'],
   },
   // {
@@ -109,10 +116,12 @@ export const PRODUCTS = [
 // Escolhe o produto para esta prova: primeiro os que este celular nunca viu
 // (na ordem da lista); se já viu todos, o que foi visto há mais tempo.
 // `seen` = { [id]: horário em que foi mostrado }. Não usa nenhum dado pessoal.
-export function pickOffer(durationMin, total, seen = {}, products = PRODUCTS, limits = LIMITS) {
+// `species`: espécie lembrada no celular ('' = ainda não escolhida → todos os produtos).
+export function pickOffer(durationMin, total, seen = {}, products = PRODUCTS, limits = LIMITS, species = '') {
   const tier = tierFor(durationMin, total, limits);
   if (!tier) return null;
-  const byDuration = products.filter((p) => !p.durations || p.durations.includes(durationMin));
+  const byDuration = products.filter((p) => (!p.durations || p.durations.includes(durationMin))
+    && (!species || !p.species || p.species.includes(species)));
   const byTier = byDuration.filter((p) => !p.tiers || p.tiers.includes(tier));
   const eligible = byTier.length ? byTier : byDuration;
   if (eligible.length === 0) return null;

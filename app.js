@@ -1,6 +1,6 @@
 import * as L from './logic.js';
-import { pickOffer, tierFor } from './offers.js';
-import { renderShareImage } from './share.js';
+import { pickOffer, tierFor, SPECIES } from './offers.js';
+import { renderArt, canvasToFile } from './share.js';
 
 const KEY = 'contador-cantos.sessao.v1';
 const $ = (id) => document.getElementById(id);
@@ -258,7 +258,7 @@ el.bird.addEventListener('keydown', (e) => { if (e.key === 'Enter') el.bird.blur
 
 // Teclado ou controle Bluetooth (passador de slides), se alguém usar.
 document.addEventListener('keydown', (e) => {
-  if (e.target === el.bird || el.confirm.open || el.iosHelp.open || offerDlg.open || pushDlg.open || e.repeat) return;
+  if (e.target === el.bird || el.confirm.open || el.iosHelp.open || offerDlg.open || pushDlg.open || artDlg.open || e.repeat) return;
   if ([' ', 'Enter', 'ArrowUp', 'ArrowRight', 'PageDown', '+'].includes(e.key)) { e.preventDefault(); plus(); }
   else if (['Backspace', 'ArrowDown', 'ArrowLeft', 'PageUp', '-'].includes(e.key)) { e.preventDefault(); minus(); }
 });
@@ -344,7 +344,6 @@ function render() {
   el.reset.disabled = !started;
   el.reset.hidden = s.finished;
   shareBtn.hidden = !s.finished;
-  if (s.finished) prepareShare();
   el.durations.forEach((b) => {
     b.setAttribute('aria-checked', String(Number(b.dataset.min) === s.durationMin));
     b.disabled = started;
@@ -359,7 +358,7 @@ function showOffer() {
   let seen = {};
   try { seen = JSON.parse(localStorage.getItem(OFFERS_SEEN_KEY)) || {}; } catch { /* sem armazenamento */ }
   const total = s.events.length;
-  const p = pickOffer(s.durationMin, total, seen);
+  const p = pickOffer(s.durationMin, total, seen, undefined, undefined, currentSpecies());
   // segurança: só abre links https (evita "javascript:" ou endereços estranhos por engano)
   if (!p || !/^https:\/\//i.test(p.link)) return false;
   offerShown = p;
@@ -387,36 +386,136 @@ $('offerLink').addEventListener('click', () => {
   offerDlg.close();
 });
 
-// ---------- compartilhar resultado (imagem para WhatsApp/Instagram) ----------
-// A imagem é preparada assim que a roda termina, para o compartilhamento abrir
-// na hora do toque (o iPhone exige que seja direto no toque).
+// ---------- arte de resultado ("Monte sua arte") ----------
+// Ao tocar em Compartilhar, abre a tela com prévia, tema, espécie e campos opcionais.
+// Preferências (tema, espécie, proprietário, plantel, cidade) ficam lembradas no celular.
+const ART_KEY = 'contador-cantos.arte';
 const shareBtn = $('share');
-let shareKey = '';
-let shareFile = null;
-let sharePending = null;
-function shareData() {
+const artDlg = $('arte');
+const artPreview = $('artePreview');
+const artInputs = {
+  bird: $('arteBird'), especie: $('arteEspecie'), outra: $('arteEspecieOutra'), outraWrap: $('arteOutraWrap'),
+  owner: $('arteOwner'), plantel: $('artePlantel'), cidade: $('arteCidade'),
+};
+const temaBtns = [...document.querySelectorAll('.tema-btn')];
+let artPrefs = { tema: 'esmeralda', especie: '', especieOutra: '', owner: '', plantel: '', cidade: '' };
+try { artPrefs = { ...artPrefs, ...(JSON.parse(localStorage.getItem(ART_KEY)) || {}) }; } catch { /* sem armazenamento */ }
+function saveArtPrefs() {
+  try { localStorage.setItem(ART_KEY, JSON.stringify(artPrefs)); } catch { /* sem armazenamento */ }
+}
+function currentSpecies() {
+  return artPrefs.especie === 'Outra' ? String(artPrefs.especieOutra || '').trim() : artPrefs.especie;
+}
+
+// opções de espécie
+artInputs.especie.innerHTML = '';
+for (const [value, label] of [['', 'Escolha a espécie'], ...SPECIES.map((x) => [x, x]), ['Outra', 'Outra…']]) {
+  const o = document.createElement('option');
+  o.value = value; o.textContent = label;
+  artInputs.especie.append(o);
+}
+
+function dezCount() {
+  return s.events.filter((ms) => ms < 10 * L.MS_MIN).length;
+}
+function artData() {
+  const pm = L.perMinute(s);
+  const best = Math.max(0, ...pm);
   return {
-    bird: s.bird, total: s.events.length, durationMin: s.durationMin,
-    avg: s.events.length / s.durationMin, vistos: L.vistos(s), vistoStep: s.vistoStep,
-    perMinute: L.perMinute(s), date: new Date(),
+    bird: s.bird,
+    especie: currentSpecies(),
+    durationMin: s.durationMin,
+    total: s.events.length,
+    dez: s.durationMin === 15 ? dezCount() : null,
+    melhorQtd: best,
+    melhorMin: pm.indexOf(best) + 1,
+    date: new Date().toLocaleDateString('pt-BR'),
+    owner: String(artPrefs.owner || '').trim(),
+    plantel: String(artPrefs.plantel || '').trim(),
+    cidade: String(artPrefs.cidade || '').trim(),
   };
 }
-function prepareShare() {
-  const key = `${s.events.length}|${s.bird}|${s.durationMin}|${s.vistoStep}`;
-  if (key === shareKey) return sharePending;
-  shareKey = key;
-  shareFile = null;
-  sharePending = renderShareImage(shareData())
-    .then((blob) => {
-      if (key === shareKey) shareFile = new File([blob], 'contador-strike-resultado.png', { type: 'image/png' });
-      return shareFile;
-    })
-    .catch(() => null);
-  return sharePending;
+
+let artFile = null;
+let artSeq = 0;
+let artUrl = '';
+let artPending = null;
+function refreshArt() {
+  const seq = ++artSeq;
+  artFile = null;
+  artDlg.classList.add('rendering');
+  artPending = (async () => {
+    try {
+      const canvas = await renderArt(artData(), artPrefs.tema);
+      const file = await canvasToFile(canvas);
+      if (seq !== artSeq) return null;
+      artFile = file;
+      if (artUrl) URL.revokeObjectURL(artUrl);
+      artUrl = URL.createObjectURL(file);
+      artPreview.src = artUrl;
+      return file;
+    } catch { return null; } finally {
+      if (seq === artSeq) artDlg.classList.remove('rendering');
+    }
+  })();
+  return artPending;
 }
+let artTimer = 0;
+function scheduleArt() { clearTimeout(artTimer); artTimer = setTimeout(refreshArt, 250); }
+
+function fillArtForm() {
+  artInputs.bird.value = s.bird;
+  artInputs.especie.value = artPrefs.especie || '';
+  artInputs.outra.value = artPrefs.especieOutra || '';
+  artInputs.outraWrap.hidden = artPrefs.especie !== 'Outra';
+  artInputs.owner.value = artPrefs.owner || '';
+  artInputs.plantel.value = artPrefs.plantel || '';
+  artInputs.cidade.value = artPrefs.cidade || '';
+  temaBtns.forEach((b) => b.setAttribute('aria-checked', String(b.dataset.tema === artPrefs.tema)));
+}
+
+temaBtns.forEach((b) => b.addEventListener('click', () => {
+  artPrefs.tema = b.dataset.tema;
+  temaBtns.forEach((x) => x.setAttribute('aria-checked', String(x === b)));
+  saveArtPrefs();
+  refreshArt();
+}));
+artInputs.bird.addEventListener('input', () => {
+  update(L.setBird(s, artInputs.bird.value));
+  el.bird.value = s.bird;
+  scheduleArt();
+});
+artInputs.especie.addEventListener('change', () => {
+  artPrefs.especie = artInputs.especie.value;
+  artInputs.outraWrap.hidden = artPrefs.especie !== 'Outra';
+  saveArtPrefs();
+  refreshArt();
+});
+for (const [key, input] of [['especieOutra', artInputs.outra], ['owner', artInputs.owner], ['plantel', artInputs.plantel], ['cidade', artInputs.cidade]]) {
+  input.addEventListener('input', () => { artPrefs[key] = input.value; saveArtPrefs(); scheduleArt(); });
+}
+// Enter nos campos não fecha a janela
+artDlg.querySelector('form').addEventListener('submit', (e) => {
+  if (e.submitter?.value !== 'close') e.preventDefault();
+});
+artDlg.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.target.matches('input')) { e.preventDefault(); e.target.blur(); }
+});
+
+shareBtn.addEventListener('click', () => {
+  track('arte-aberta');
+  fillArtForm();
+  artDlg.showModal();
+  refreshArt();
+});
+
 function shareText() {
   const name = s.bird.trim() || 'Meu pássaro';
-  return `🔥 ${name} fez ${s.events.length} cantos em ${s.durationMin} minutos!\nMarcado com o Contador Strike: https://contadorstrike.app`;
+  const sp = currentSpecies();
+  const placar = s.durationMin === 15
+    ? `${dezCount()}-${s.events.length} (dez-quinze)`
+    : `${s.events.length} cantos em 10 minutos`;
+  return `🔥 ${sp ? sp + ' ' : ''}${name}: ${placar}!\nMarcado com o Contador Strike: https://contadorstrike.app`;
 }
 function downloadFile(file) {
   const url = URL.createObjectURL(file);
@@ -425,9 +524,9 @@ function downloadFile(file) {
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
-shareBtn.addEventListener('click', async () => {
-  track('compartilhar-clique');
-  const file = shareFile || await prepareShare();
+$('arteShare').addEventListener('click', async () => {
+  track(`arte-tema-${artPrefs.tema}`);
+  const file = artFile || await artPending;
   const text = shareText();
   try {
     if (file && navigator.canShare?.({ files: [file] })) {
