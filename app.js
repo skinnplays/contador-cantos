@@ -356,7 +356,8 @@ function showOffer() {
   try { seen = JSON.parse(localStorage.getItem(OFFERS_SEEN_KEY)) || {}; } catch { /* sem armazenamento */ }
   const total = s.events.length;
   const p = pickOffer(s.durationMin, total, seen);
-  if (!p) return false;
+  // segurança: só abre links https (evita "javascript:" ou endereços estranhos por engano)
+  if (!p || !/^https:\/\//i.test(p.link)) return false;
   offerShown = p;
   seen[p.id] = Date.now();
   try { localStorage.setItem(OFFERS_SEEN_KEY, JSON.stringify(seen)); } catch { /* sem armazenamento */ }

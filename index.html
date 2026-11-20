@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
   <meta name="theme-color" content="#000000">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -15,7 +16,8 @@
   <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="stylesheet" href="styles.css">
   <script type="module" src="app.js"></script>
-  <script data-goatcounter="https://contadorstrike.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+  <!-- GoatCounter hospedado aqui mesmo (cópia revisada do count.v4.js oficial) -->
+  <script data-goatcounter="https://contadorstrike.goatcounter.com/count" async src="count.js"></script>
   <!-- Notificações (OneSignal). O worker dele fica numa pasta própria para não
        conflitar com o sw.js do app, que cuida do funcionamento offline. -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
