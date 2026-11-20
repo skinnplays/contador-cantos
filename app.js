@@ -360,3 +360,18 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
     .then((reg) => reg.update())
     .catch(() => {});
 }
+
+// ---------- bloqueios: menu do botão direito, F12 e atalhos de inspeção ----------
+document.addEventListener('contextmenu', (e) => {
+  if (!e.target.closest('input, textarea')) e.preventDefault();
+});
+document.addEventListener('keydown', (e) => {
+  const k = e.key.toUpperCase();
+  const ctrl = e.ctrlKey || e.metaKey;
+  if (
+    k === 'F12' ||
+    (ctrl && e.shiftKey && ['I', 'J', 'C'].includes(k)) ||
+    (ctrl && e.altKey && ['I', 'J', 'C'].includes(k)) ||
+    (ctrl && k === 'U')
+  ) e.preventDefault();
+});

@@ -261,3 +261,13 @@ button { font: inherit; color: inherit; touch-action: manipulation; }
 .btn.swap[aria-pressed="true"] { border-color: var(--brand); color: var(--brand); }
 .app.controls-up .controls { order: 1; }
 .app.controls-up .minutes { order: 2; }
+
+/* Bloqueia seleção de texto e o menu de toque longo (exceto no campo do pássaro) */
+html, body {
+  -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none;
+}
+input, textarea {
+  -webkit-user-select: text; user-select: text;
+  -webkit-touch-callout: default;
+}
