@@ -28,6 +28,22 @@
         appId: "b597b482-8be5-4960-b9f3-e2bf8c914e75",
         serviceWorkerPath: "push/onesignal/OneSignalSDKWorker.js",
         serviceWorkerParam: { scope: "/push/onesignal/" },
+        // Sem janela automática do OneSignal: o convite é o cartão do próprio app.
+        // Textos em português caso o painel do OneSignal ainda tente mostrar a dele.
+        promptOptions: {
+          slidedown: {
+            prompts: [{
+              type: "push",
+              autoPrompt: false,
+              text: {
+                actionMessage: "Quer receber dicas e ofertas para o seu coleiro? Você pode desativar quando quiser.",
+                acceptButton: "Inscrever-se",
+                cancelButton: "Agora não",
+              },
+            }],
+          },
+        },
+        notifyButton: { enable: false },
       });
       window.OneSignalReady = OneSignal;
     });
