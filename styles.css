@@ -271,3 +271,6 @@ input, textarea {
   -webkit-user-select: text; user-select: text;
   -webkit-touch-callout: default;
 }
+
+/* Indicador de tela ligada: some quando está tudo certo, só aparece se a tela puder apagar. */
+.wake[data-state="on"] { display: none; }
