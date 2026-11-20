@@ -16,6 +16,20 @@
   <link rel="stylesheet" href="styles.css">
   <script type="module" src="app.js"></script>
   <script data-goatcounter="https://contadorstrike.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+  <!-- Notificações (OneSignal). O worker dele fica numa pasta própria para não
+       conflitar com o sw.js do app, que cuida do funcionamento offline. -->
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <script>
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function (OneSignal) {
+      await OneSignal.init({
+        appId: "b597b482-8be5-4960-b9f3-e2bf8c914e75",
+        serviceWorkerPath: "push/onesignal/OneSignalSDKWorker.js",
+        serviceWorkerParam: { scope: "/push/onesignal/" },
+      });
+      window.OneSignalReady = OneSignal;
+    });
+  </script>
 </head>
 <body>
   <main class="app">
@@ -115,6 +129,20 @@
       <div class="row">
         <button value="close" class="btn ghost">Fechar</button>
         <a id="offerLink" class="btn primary offer-link" target="_blank" rel="noopener">Ver produto</a>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="push" class="confirm offer">
+    <form method="dialog">
+      <p class="offer-result" id="pushResult"></p>
+      <p class="offer-tag">Criatório Strike</p>
+      <h2 class="offer-name">🔔 Quer receber dicas e ofertas?</h2>
+      <p class="offer-text">Avisamos no celular sobre cuidados com o coleiro e promoções de rações e suplementos. No máximo 1 ou 2 por semana, e você pode desativar quando quiser.</p>
+      <p class="push-privacy"><a href="privacidade.html" target="_blank" rel="noopener">Política de privacidade</a></p>
+      <div class="row">
+        <button type="button" id="pushNo" class="btn ghost">Agora não</button>
+        <button type="button" id="pushYes" class="btn primary offer-link">Quero receber</button>
       </div>
     </form>
   </dialog>

@@ -287,3 +287,5 @@ input, textarea {
 .offer-img { background: #fff; }
 .offer .row .btn.ghost { flex: 0 0 auto; padding-inline: 18px; }
 .offer .row .offer-link { flex: 1; white-space: nowrap; }
+.offer .push-privacy { margin: -8px 0 14px; font-size: .8rem; }
+.offer .push-privacy a { color: var(--muted); }

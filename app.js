@@ -257,7 +257,7 @@ el.bird.addEventListener('keydown', (e) => { if (e.key === 'Enter') el.bird.blur
 
 // Teclado ou controle Bluetooth (passador de slides), se alguém usar.
 document.addEventListener('keydown', (e) => {
-  if (e.target === el.bird || el.confirm.open || el.iosHelp.open || offerDlg.open || e.repeat) return;
+  if (e.target === el.bird || el.confirm.open || el.iosHelp.open || offerDlg.open || pushDlg.open || e.repeat) return;
   if ([' ', 'Enter', 'ArrowUp', 'ArrowRight', 'PageDown', '+'].includes(e.key)) { e.preventDefault(); plus(); }
   else if (['Backspace', 'ArrowDown', 'ArrowLeft', 'PageUp', '-'].includes(e.key)) { e.preventDefault(); minus(); }
 });
@@ -356,7 +356,7 @@ function showOffer() {
   try { seen = JSON.parse(localStorage.getItem(OFFERS_SEEN_KEY)) || {}; } catch { /* sem armazenamento */ }
   const total = s.events.length;
   const p = pickOffer(s.durationMin, total, seen);
-  if (!p) return;
+  if (!p) return false;
   offerShown = p;
   seen[p.id] = Date.now();
   try { localStorage.setItem(OFFERS_SEEN_KEY, JSON.stringify(seen)); } catch { /* sem armazenamento */ }
@@ -372,11 +372,49 @@ function showOffer() {
   track(`produto-${p.id}-mostrou`);
   // espera o alerta de fim de tempo antes de abrir
   setTimeout(() => { if (!offerDlg.open) offerDlg.showModal(); }, 1500);
+  return true;
 }
 $('offerLink').addEventListener('click', () => {
   if (offerShown) track(`produto-${offerShown.id}-clicou`);
   offerDlg.close();
 });
+
+// ---------- convite para notificações (OneSignal) ----------
+// Só pergunta depois de uma roda que NÃO mostrou produto (roda boa), se o aparelho
+// aceita notificações, se a pessoa ainda não decidiu e no máximo 1 vez por semana.
+// O pedido oficial do celular só aparece se a pessoa tocar em "Quero receber".
+const PUSH_ASKED_KEY = 'contador-cantos.push-convite';
+const PUSH_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000;
+const pushDlg = $('push');
+function pushEligible() {
+  const OS = window.OneSignalReady;
+  if (!OS) return false;
+  try {
+    if (!OS.Notifications.isPushSupported()) return false;
+    if (OS.Notifications.permissionNative !== 'default') return false;
+  } catch { return false; }
+  let last = 0;
+  try { last = Number(localStorage.getItem(PUSH_ASKED_KEY)) || 0; } catch { /* sem armazenamento */ }
+  return Date.now() - last > PUSH_INTERVAL_MS;
+}
+function showPushInvite() {
+  if (!pushEligible()) return;
+  try { localStorage.setItem(PUSH_ASKED_KEY, String(Date.now())); } catch { /* sem armazenamento */ }
+  $('pushResult').textContent = `Boa roda! ${s.events.length} cantos em ${s.durationMin} minutos.`;
+  track('push-convite-mostrou');
+  setTimeout(() => { if (!pushDlg.open && !offerDlg.open) pushDlg.showModal(); }, 1500);
+}
+$('pushYes').addEventListener('click', () => {
+  track('push-convite-sim');
+  pushDlg.close();
+  const OS = window.OneSignalReady;
+  if (!OS) return;
+  // precisa ser chamado direto no toque (exigência do iPhone)
+  OS.Notifications.requestPermission()
+    .then(() => { if (OS.Notifications.permission) track('push-permitiu'); else track('push-negou'); })
+    .catch(() => {});
+});
+$('pushNo').addEventListener('click', () => { track('push-convite-agora-nao'); pushDlg.close(); });
 
 function loop() {
   const now = Date.now();
@@ -386,7 +424,7 @@ function loop() {
     save();
     vibrate([300, 120, 300, 120, 300]);
     beep(660, 350, 3);
-    if (s.finished) showOffer();
+    if (s.finished && !showOffer()) showPushInvite();
   } else if (L.isRunning(s) && !warnedLastMinute && s.durationMin * L.MS_MIN - L.elapsedMs(s, now) <= L.MS_MIN) {
     warnedLastMinute = true;
     vibrate([120, 80, 120]);
