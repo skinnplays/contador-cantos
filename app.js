@@ -81,25 +81,44 @@ const isInstalled = () => matchMedia('(display-mode: standalone)').matches
 const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
   || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
+// Contagem anônima de eventos no GoatCounter (sem dados pessoais).
+// O script carrega em segundo plano; se ainda não chegou, tenta de novo por alguns segundos.
+function track(name, tries = 20) {
+  try {
+    if (window.goatcounter?.count) {
+      window.goatcounter.count({ path: name, title: name, event: true });
+    } else if (tries > 0) {
+      setTimeout(() => track(name, tries - 1), 500);
+    }
+  } catch { /* sem contagem */ }
+}
+if (isInstalled()) track('app-aberto-instalado');
+
 let installEvent = null;
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   installEvent = e;
   if (!isInstalled()) el.install.hidden = false;
 });
-window.addEventListener('appinstalled', () => { installEvent = null; el.install.hidden = true; });
+window.addEventListener('appinstalled', () => {
+  installEvent = null; el.install.hidden = true;
+  track('instalar-concluido');
+});
 // Mostra o botão sempre que não estiver instalado; se o navegador não oferecer
 // a instalação automática, o botão explica como instalar pelo menu.
 if (!isInstalled()) el.install.hidden = false;
 
 el.install.addEventListener('click', async () => {
+  track('instalar-clique');
   if (installEvent) {
     installEvent.prompt();
     const { outcome } = await installEvent.userChoice;
     installEvent = null;
+    track(outcome === 'accepted' ? 'instalar-aceito' : 'instalar-recusado');
     if (outcome === 'accepted') el.install.hidden = true;
     return;
   }
+  track(isIOS ? 'instalar-instrucoes-iphone' : 'instalar-instrucoes-outros');
   el.iosHelp.querySelector('.help-ios').hidden = !isIOS;
   el.iosHelp.querySelector('.help-android').hidden = isIOS;
   el.iosHelp.showModal();
