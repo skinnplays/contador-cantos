@@ -135,11 +135,116 @@ el.install.addEventListener('click', async () => {
     if (outcome === 'accepted') el.install.hidden = true;
     return;
   }
-  track(isIOS ? 'instalar-instrucoes-iphone' : 'instalar-instrucoes-outros');
-  el.iosHelp.querySelector('.help-ios').hidden = !isIOS;
-  el.iosHelp.querySelector('.help-android').hidden = isIOS;
+  const g = installGuide();
+  track(`instalar-instrucoes-${g.kind}`);
+  $('installTitle').textContent = g.title;
+  $('installSteps').innerHTML = g.steps.map((s) => `<li>${s}</li>`).join(''); // textos fixos do app
+  $('installAfter').hidden = !!g.openOutside;
+  $('installCopy').hidden = !g.openOutside;
+  $('installCopy').textContent = 'Copiar link';
   el.iosHelp.showModal();
 });
+
+$('installCopy').addEventListener('click', async () => {
+  const url = 'https://contadorstrike.app/';
+  try { await navigator.clipboard.writeText(url); }
+  catch {
+    const t = document.createElement('textarea'); t.value = url; document.body.append(t);
+    t.select(); try { document.execCommand('copy'); } catch { /* sem cópia */ } t.remove();
+  }
+  $('installCopy').textContent = 'Link copiado ✓';
+  track('instalar-copiar-link');
+});
+
+// Escolhe o passo a passo certo para o aparelho e o navegador em uso.
+// Safari 26 (iOS 26) escondeu o Compartilhar dentro do menu "⋯"; navegadores de
+// dentro de apps (Instagram, Facebook...) não instalam, então pedimos para abrir fora.
+function installGuide() {
+  const ua = navigator.userAgent;
+  const inApp = /Instagram|FBAN|FBAV|FB_IAB|FBIOS|musical_ly|Bytedance|TikTok|Snapchat|LinkedInApp|Pinterest|Line\//i.test(ua);
+  const appName = /Instagram/i.test(ua) ? 'Instagram' : /FBAN|FBAV|FB_IAB|FBIOS/i.test(ua) ? 'Facebook'
+    : /musical_ly|Bytedance|TikTok/i.test(ua) ? 'TikTok' : 'aplicativo';
+  const outside = isIOS ? 'Safari' : 'Chrome';
+  const share = '<b>Compartilhar</b> (o quadrado com a seta para cima)';
+  const add = 'Role a lista e toque em <b>Adicionar à Tela de Início</b>';
+
+  if (inApp) {
+    return {
+      kind: `app-${appName.toLowerCase()}`, openOutside: true, title: `Abra no ${outside} para instalar`,
+      steps: [
+        `Você está no navegador do ${appName}, que não instala apps.`,
+        `Toque nos três pontinhos <b>${isIOS ? '⋯' : '⋮'}</b> no canto de cima e escolha <b>Abrir no navegador</b> (ou <b>Abrir no ${outside}</b>).`,
+        `Se não tiver essa opção, toque em <b>Copiar link</b> aqui embaixo e cole no ${outside}.`,
+        'Lá, toque em <b>⬇ Instalar</b> de novo.',
+      ],
+    };
+  }
+  if (!isIOS) {
+    return {
+      kind: 'outros', title: 'Instalar no Android',
+      steps: [
+        'Abra este site no <b>Chrome</b>.',
+        'Toque no menu <b>⋮</b> (canto superior direito).',
+        'Toque em <b>Instalar app</b> ou <b>Adicionar à tela inicial</b>.',
+      ],
+    };
+  }
+
+  const iPad = !/iphone|ipod/i.test(ua);
+  const device = iPad ? 'iPad' : 'iPhone';
+  const os = ua.match(/OS (\d+)_(\d+)/);
+  const iosVer = os ? +os[1] + +os[2] / 10 : 0;
+  const safariVer = +(ua.match(/Version\/(\d+)/)?.[1] || 0);
+  const browser = /CriOS/.test(ua) ? 'Chrome' : /FxiOS/.test(ua) ? 'Firefox' : /EdgiOS/.test(ua) ? 'Edge'
+    : /OPiOS|OPT\//.test(ua) ? 'Opera' : /GSA\//.test(ua) ? 'app do Google' : /Ddg\/|DuckDuckGo/.test(ua) ? 'DuckDuckGo'
+    : (/Safari\//.test(ua) && safariVer) ? 'Safari' : 'outro';
+
+  if (browser === 'Safari' && safariVer >= 26) {
+    return {
+      kind: 'iphone-safari26', title: `Instalar no ${device}`,
+      steps: [
+        `Toque nos três pontinhos <b>⋯</b> ${iPad ? 'no alto da tela' : 'ao lado do endereço do site, embaixo à direita'}.`,
+        `Toque em ${share}.`,
+        `${add} (se não aparecer, toque em <b>Ver mais</b>).`,
+        'Deixe <b>Abrir como App Web</b> ligado e toque em <b>Adicionar</b>.',
+      ],
+    };
+  }
+  if (browser === 'Safari') {
+    return {
+      kind: 'iphone-safari', title: `Instalar no ${device}`,
+      steps: [
+        `Toque no botão ${share}, ${iPad ? 'no alto da tela, à direita' : 'na barra de baixo (ou de cima) do Safari'}.`,
+        `${add}.`,
+        'Toque em <b>Adicionar</b>, no canto de cima.',
+      ],
+    };
+  }
+  // Chrome, Edge, Firefox... só instalam no iPhone a partir do iOS 16.4
+  if (browser !== 'outro' && iosVer >= 16.4) {
+    const first = browser === 'Chrome'
+      ? `Toque em ${share}, no alto da tela, ao lado do endereço do site.`
+      : `Abra o menu do ${browser} e toque em ${share}.`;
+    return {
+      kind: `iphone-${browser.toLowerCase().replace(/\s/g, '-')}`, title: `Instalar no ${device}`,
+      steps: [
+        first,
+        `${add} (se não aparecer, toque em <b>Mais</b> ou <b>Editar ações</b>).`,
+        'Toque em <b>Adicionar</b>.',
+        'Não achou a opção? Abra <b>contadorstrike.app</b> no <b>Safari</b> e instale por lá.',
+      ],
+    };
+  }
+  return {
+    kind: 'iphone-abrir-safari', openOutside: true, title: 'Abra no Safari para instalar',
+    steps: [
+      `Neste navegador o ${device} não deixa instalar o app.`,
+      'Toque em <b>Copiar link</b> aqui embaixo.',
+      'Abra o <b>Safari</b>, cole o link na barra de endereço e abra o site.',
+      'Lá, toque em <b>⬇ Instalar</b> de novo.',
+    ],
+  };
+}
 
 // No navegador (sem instalar), entra em tela cheia ao tocar em +1 ou Iniciar.
 // Precisa ser no "soltar o dedo": é aí que o navegador libera tela cheia e som.
