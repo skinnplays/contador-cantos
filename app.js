@@ -1,6 +1,7 @@
 import * as L from './logic.js';
 import { pickOffer, tierFor, SPECIES } from './offers.js';
 import { renderArt, canvasToFile } from './share.js';
+import { startTour, tourSeen, isTourOpen } from './tour.js';
 
 const KEY = 'contador-cantos.sessao.v1';
 const $ = (id) => document.getElementById(id);
@@ -272,7 +273,7 @@ el.bird.addEventListener('keydown', (e) => { if (e.key === 'Enter') el.bird.blur
 
 // Teclado ou controle Bluetooth (passador de slides), se alguém usar.
 document.addEventListener('keydown', (e) => {
-  if (e.target === el.bird || el.confirm.open || el.iosHelp.open || offerDlg.open || pushDlg.open || artDlg.open || e.repeat) return;
+  if (e.target === el.bird || isTourOpen() || el.confirm.open || el.iosHelp.open || offerDlg.open || pushDlg.open || artDlg.open || e.repeat) return;
   if ([' ', 'Enter', 'ArrowUp', 'ArrowRight', 'PageDown', '+'].includes(e.key)) { e.preventDefault(); plus(); }
   else if (['Backspace', 'ArrowDown', 'ArrowLeft', 'PageUp', '-'].includes(e.key)) { e.preventDefault(); minus(); }
 });
@@ -629,6 +630,16 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
     .then((reg) => reg.update())
     .catch(() => {});
+}
+
+// ---------- guia de primeiro uso ----------
+$('help').addEventListener('click', () => startTour(track));
+// Abre sozinho só para quem nunca viu e não tem roda em andamento.
+if (!tourSeen() && !L.hasStarted(s)) {
+  setTimeout(() => {
+    const anyOpen = [...document.querySelectorAll('dialog')].some((d) => d.open);
+    if (!anyOpen && !isTourOpen() && !L.hasStarted(s)) startTour(track);
+  }, 700);
 }
 
 // ---------- bloqueios: menu do botão direito, F12 e atalhos de inspeção ----------

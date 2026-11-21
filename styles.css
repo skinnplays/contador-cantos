@@ -433,3 +433,38 @@ dialog[open]::backdrop { animation: fade-in .18s ease-out; }
   position: sticky; bottom: -18px; margin: 6px -18px -18px; padding: 10px 18px 14px;
   background: var(--surface); border-top: 1px solid var(--line);
 }
+
+/* ---------- Guia de primeiro uso ---------- */
+.help-btn {
+  position: relative; flex: none; width: 32px; height: 32px; border-radius: 50%;
+  border: 1px solid var(--line); background: var(--surface); color: var(--text);
+  font-weight: 800; font-size: 1rem; line-height: 1; cursor: pointer; padding: 0;
+}
+.help-btn::after { content: ""; position: absolute; inset: -6px; }
+.tour { position: fixed; inset: 0; z-index: 1000; touch-action: none; }
+.tour[hidden] { display: none; }
+.tour-spot {
+  position: fixed; border-radius: 16px; pointer-events: none;
+  box-shadow: 0 0 0 3px var(--accent), 0 0 0 200vmax rgba(0, 0, 0, .72);
+  transition-property: left, top, width, height; transition-duration: .28s; transition-timing-function: cubic-bezier(.2, .8, .2, 1);
+}
+.tour.no-target { background: rgba(0, 0, 0, .72); }
+.tour.no-target .tour-spot { display: none; }
+.tour-card {
+  position: fixed; background: var(--surface); color: var(--text);
+  border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px 16px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .45);
+  transition-property: top, left; transition-duration: .28s; transition-timing-function: cubic-bezier(.2, .8, .2, 1);
+}
+.tour-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.tour-step { font-size: .78rem; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tour-skip {
+  border: 0; background: transparent; color: var(--muted); font-weight: 700; font-size: .85rem;
+  padding: 8px 4px; margin: -8px -4px; cursor: pointer; text-decoration: underline;
+}
+.tour-title { margin: 0 0 6px; font-size: 1.15rem; line-height: 1.2; text-wrap: balance; }
+.tour-text { margin: 0 0 14px; font-size: .98rem; line-height: 1.4; color: var(--text); text-wrap: pretty; }
+.tour-actions { display: flex; gap: 8px; }
+.tour-actions .btn { flex: 1; padding-block: 11px; }
+.tour-actions .btn[hidden] { display: none; }
+@media (prefers-reduced-motion: reduce) { .tour-spot, .tour-card { transition: none; } }

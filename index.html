@@ -58,6 +58,7 @@
       </div>
       <div class="top-actions">
         <button type="button" id="install" class="install" hidden>⬇ Instalar</button>
+        <button type="button" id="help" class="help-btn" aria-label="Como usar o app" title="Como usar">?</button>
         <span id="wake" class="wake" data-state="off" title="Mantém a tela do celular ligada">Tela ligada</span>
       </div>
     </header>
@@ -113,6 +114,22 @@
   <div id="toast" class="toast" role="alert" hidden>
     <strong id="toastTitle">1º VISTO</strong>
     <span id="toastText">50 cantos · 03:12</span>
+  </div>
+
+  <div id="tour" class="tour" hidden>
+    <div id="tourSpot" class="tour-spot" aria-hidden="true"></div>
+    <div id="tourCard" class="tour-card" role="dialog" aria-modal="true" aria-labelledby="tourTitle" aria-describedby="tourText">
+      <div class="tour-head">
+        <span id="tourStep" class="tour-step"></span>
+        <button type="button" id="tourSkip" class="tour-skip">Pular guia</button>
+      </div>
+      <h2 id="tourTitle" class="tour-title"></h2>
+      <p id="tourText" class="tour-text"></p>
+      <div class="tour-actions">
+        <button type="button" id="tourBack" class="btn ghost">Voltar</button>
+        <button type="button" id="tourNext" class="btn primary">Próximo</button>
+      </div>
+    </div>
   </div>
 
   <dialog id="iosHelp" class="confirm">
