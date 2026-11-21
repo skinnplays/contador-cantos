@@ -40,6 +40,11 @@
   }
 }
 
+/* --dvh = 1% da altura visível da tela. O app.js mede a altura real (innerHeight) e
+   atualiza a variável; o 1dvh é só o valor inicial. Alguns Android (ex.: Galaxy S24)
+   abrem com o dvh maior que a tela e só corrigem depois de minimizar o app. */
+:root { --dvh: 1dvh; }
+
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 html, body { margin: 0; height: 100%; }
@@ -60,7 +65,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; }
   gap: 10px;
   max-width: 560px;
   margin: 0 auto;
-  min-height: 100dvh;
+  min-height: calc(100 * var(--dvh));
   padding: max(10px, env(safe-area-inset-top)) 14px max(12px, env(safe-area-inset-bottom));
 }
 
@@ -294,31 +299,31 @@ input, textarea {
    Os tamanhos encolhem conforme a altura disponível (dvh = altura visível). */
 html, body { height: 100%; overflow: hidden; }
 .app {
-  height: 100dvh; min-height: 0; overflow: hidden;
-  gap: clamp(5px, 1.2dvh, 10px);
-  padding-top: max(clamp(6px, 1.2dvh, 10px), env(safe-area-inset-top));
-  padding-bottom: max(clamp(6px, 1.4dvh, 12px), env(safe-area-inset-bottom));
+  height: calc(100 * var(--dvh)); min-height: 0; overflow: hidden;
+  gap: clamp(5px, calc(1.2 * var(--dvh)), 10px);
+  padding-top: max(clamp(6px, calc(1.2 * var(--dvh)), 10px), env(safe-area-inset-top));
+  padding-bottom: max(clamp(6px, calc(1.4 * var(--dvh)), 12px), env(safe-area-inset-bottom));
 }
 .app > * { flex-shrink: 0; }
-.bird { padding-block: clamp(6px, 1.2dvh, 10px); }
-.timer-card { padding: clamp(4px, .9dvh, 8px) 14px clamp(5px, 1.1dvh, 10px); }
-.timer { font-size: clamp(2.3rem, min(19vw, 8.6dvh), 5.5rem); }
-.progress { margin: clamp(3px, .9dvh, 8px) 0 clamp(2px, .7dvh, 6px); }
-.stat { padding: clamp(3px, .9dvh, 8px) 6px; gap: 0; }
-.stat strong { font-size: clamp(1.2rem, 4dvh, 1.9rem); }
-.visto-step button { padding-block: clamp(4px, .9dvh, 7px); }
-.vchip { padding-block: clamp(4px, .9dvh, 8px); }
-.cell { padding: clamp(1px, .45dvh, 4px) 0 clamp(2px, .55dvh, 5px); }
-.cell .m { font-size: clamp(.58rem, 1.55dvh, .68rem); }
-.cell .c { font-size: clamp(.85rem, 2.5dvh, 1.15rem); line-height: 1.15; }
-.minutes { gap: clamp(3px, .8dvh, 6px); }
-.controls { flex: 1 1 auto; flex-shrink: 1; min-height: 0; gap: clamp(5px, 1dvh, 8px); }
-.controls .row:first-child .btn { padding-block: clamp(7px, 1.5dvh, 12px); }
+.bird { padding-block: clamp(6px, calc(1.2 * var(--dvh)), 10px); }
+.timer-card { padding: clamp(4px, calc(.9 * var(--dvh)), 8px) 14px clamp(5px, calc(1.1 * var(--dvh)), 10px); }
+.timer { font-size: clamp(2.3rem, min(19vw, calc(8.6 * var(--dvh))), 5.5rem); }
+.progress { margin: clamp(3px, calc(.9 * var(--dvh)), 8px) 0 clamp(2px, calc(.7 * var(--dvh)), 6px); }
+.stat { padding: clamp(3px, calc(.9 * var(--dvh)), 8px) 6px; gap: 0; }
+.stat strong { font-size: clamp(1.2rem, calc(4 * var(--dvh)), 1.9rem); }
+.visto-step button { padding-block: clamp(4px, calc(.9 * var(--dvh)), 7px); }
+.vchip { padding-block: clamp(4px, calc(.9 * var(--dvh)), 8px); }
+.cell { padding: clamp(1px, calc(.45 * var(--dvh)), 4px) 0 clamp(2px, calc(.55 * var(--dvh)), 5px); }
+.cell .m { font-size: clamp(.58rem, calc(1.55 * var(--dvh)), .68rem); }
+.cell .c { font-size: clamp(.85rem, calc(2.5 * var(--dvh)), 1.15rem); line-height: 1.15; }
+.minutes { gap: clamp(3px, calc(.8 * var(--dvh)), 6px); }
+.controls { flex: 1 1 auto; flex-shrink: 1; min-height: 0; gap: clamp(5px, calc(1 * var(--dvh)), 8px); }
+.controls .row:first-child .btn { padding-block: clamp(7px, calc(1.5 * var(--dvh)), 12px); }
 .count-row { min-height: 0; }
-.plus-big { font-size: clamp(2.6rem, min(18vw, 8dvh), 5rem); }
+.plus-big { font-size: clamp(2.6rem, min(18vw, calc(8 * var(--dvh))), 5rem); }
 /* janelas (aviso de produto, convite, instruções) rolam por dentro se não couberem */
-.confirm { max-height: 92dvh; overflow-y: auto; }
-.offer-img { max-height: min(200px, 24dvh); }
+.confirm { max-height: calc(92 * var(--dvh)); overflow-y: auto; }
+.offer-img { max-height: min(200px, calc(24 * var(--dvh))); }
 
 /* ---------- Acabamento (revisão de design) ---------- */
 html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
@@ -369,11 +374,11 @@ dialog[open]::backdrop { animation: fade-in .18s ease-out; }
   .app .controls, .app.controls-up .controls {
     grid-column: 2; grid-row: 1 / span 6; height: 100%; min-height: 0;
   }
-  .timer { font-size: clamp(2rem, 11dvh, 3.4rem); }
-  .stat strong { font-size: clamp(1.1rem, 6dvh, 1.6rem); }
+  .timer { font-size: clamp(2rem, calc(11 * var(--dvh)), 3.4rem); }
+  .stat strong { font-size: clamp(1.1rem, calc(6 * var(--dvh)), 1.6rem); }
   .cell .m { font-size: .58rem; }
-  .cell .c { font-size: clamp(.8rem, 3.6dvh, 1rem); }
-  .plus-big { font-size: clamp(2.6rem, 16dvh, 4.5rem); }
+  .cell .c { font-size: clamp(.8rem, calc(3.6 * var(--dvh)), 1rem); }
+  .plus-big { font-size: clamp(2.6rem, calc(16 * var(--dvh)), 4.5rem); }
 }
 @media (orientation: landscape) and (max-height: 400px) {
   .app { row-gap: 4px; padding-top: max(4px, env(safe-area-inset-top)); padding-bottom: max(4px, env(safe-area-inset-bottom)); }
@@ -394,7 +399,7 @@ dialog[open]::backdrop { animation: fade-in .18s ease-out; }
 .arte-title { margin: 0 0 10px; font-size: 1.15rem; }
 .arte-preview { position: relative; display: flex; justify-content: center; margin-bottom: 10px; }
 .arte-preview img {
-  display: block; width: auto; height: auto; max-width: 100%; max-height: 36dvh; aspect-ratio: 4 / 5;
+  display: block; width: auto; height: auto; max-width: 100%; max-height: calc(36 * var(--dvh)); aspect-ratio: 4 / 5;
   border-radius: 10px; background: #000; outline: 1px solid rgba(255, 255, 255, .12); outline-offset: -1px;
 }
 .arte-loading {

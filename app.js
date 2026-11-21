@@ -17,6 +17,20 @@ const el = {
   install: $('install'), iosHelp: $('iosHelp'), swap: $('swap'),
 };
 
+// ---------- altura real da tela ----------
+// Mede a área visível e passa para o CSS (--dvh). Remede quando a tela muda, quando o
+// app volta do segundo plano e algumas vezes logo após abrir, porque alguns Android
+// só informam a altura certa depois que as barras do sistema terminam de aparecer.
+function fitViewport() {
+  const h = window.innerHeight || document.documentElement.clientHeight;
+  if (h > 0) document.documentElement.style.setProperty('--dvh', `${h / 100}px`);
+}
+fitViewport();
+for (const ev of ['resize', 'orientationchange', 'pageshow', 'focus']) window.addEventListener(ev, fitViewport);
+window.visualViewport?.addEventListener('resize', fitViewport);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) fitViewport(); });
+[60, 250, 700, 1500, 3000].forEach((ms) => setTimeout(fitViewport, ms));
+
 // ---------- posição dos botões (preferência de cada celular) ----------
 const LAYOUT_KEY = 'contador-cantos.botoes-no-meio';
 let controlsUp = false;
