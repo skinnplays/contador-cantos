@@ -329,8 +329,52 @@ function unlockAudio() {
     if (audio.state === 'suspended') audio.resume();
   } catch { /* sem áudio */ }
 }
+document.addEventListener('pointerdown', unlockAudio, { capture: true });
 document.addEventListener('pointerup', unlockAudio, { capture: true });
+document.addEventListener('touchend', unlockAudio, { capture: true });
 document.addEventListener('keydown', unlockAudio, { capture: true });
+
+// Som de clique a cada canto: garante um retorno no iPhone, onde a vibração
+// nem sempre funciona. Ligado por padrão onde o celular não vibra; botão 🔊 no topo.
+const SOUND_KEY = 'contador-cantos.som-toque';
+const soundBtn = $('sound');
+let tapSound = typeof navigator.vibrate !== 'function';
+try { const v = localStorage.getItem(SOUND_KEY); if (v !== null) tapSound = v === '1'; } catch { /* sem armazenamento */ }
+function applyTapSound() {
+  soundBtn.setAttribute('aria-pressed', String(tapSound));
+  soundBtn.setAttribute('aria-label', tapSound ? 'Som do toque ligado' : 'Som do toque desligado');
+  // iPhone no modo silencioso muta o som de sites; "playback" toca mesmo assim
+  try { if (navigator.audioSession) navigator.audioSession.type = tapSound ? 'playback' : 'auto'; } catch { /* sem suporte */ }
+}
+applyTapSound();
+soundBtn.addEventListener('click', () => {
+  tapSound = !tapSound;
+  try { localStorage.setItem(SOUND_KEY, tapSound ? '1' : '0'); } catch { /* sem armazenamento */ }
+  applyTapSound();
+  track(tapSound ? 'som-ligado' : 'som-desligado');
+  if (tapSound) { unlockAudio(); click(); }
+});
+
+let noise = null;
+function click(low = false) {
+  try {
+    if (!tapSound || !audio) return;
+    if (!noise) {
+      noise = audio.createBuffer(1, Math.floor(audio.sampleRate * 0.03), audio.sampleRate);
+      const d = noise.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length) ** 4;
+    }
+    const t = audio.currentTime;
+    const src = audio.createBufferSource();
+    src.buffer = noise;
+    const f = audio.createBiquadFilter();
+    f.type = 'bandpass'; f.frequency.value = low ? 1400 : 3200; f.Q.value = 1.2;
+    const g = audio.createGain();
+    g.gain.value = low ? 1.6 : 1.3;
+    src.connect(f).connect(g).connect(audio.destination);
+    src.start(t);
+  } catch { /* sem áudio */ }
+}
 
 function beep(freq = 880, ms = 180, times = 1) {
   try {
@@ -389,7 +433,19 @@ function plus() {
   setTimeout(() => el.plus.classList.remove('pressed'), 90);
   update(next);
   if (L.justReachedVisto(s)) announceVisto(L.vistos(s).at(-1));
-  else vibrate(25);
+  else { click(); tapFeedback(25); }
+}
+
+// No iPhone o toque háptico só sai quando o dedo solta (evento "click");
+// no "encostar" (pointerdown, onde o canto é contado) o sistema ignora.
+let pendingTap = 0;
+function tapFeedback(ms) {
+  if (canVibrate) { vibrate(ms); return; }
+  pendingTap = Date.now();
+}
+function flushTap() {
+  if (pendingTap && Date.now() - pendingTap < 800) iosTap();
+  pendingTap = 0;
 }
 
 let toastTimer = 0;
@@ -406,7 +462,8 @@ el.toast.addEventListener('pointerdown', () => { el.toast.hidden = true; });
 
 function minus() {
   if (s.events.length === 0) return;
-  vibrate([15, 40, 15]);
+  click(true);
+  if (canVibrate) vibrate([15, 40, 15]); else tapFeedback();
   update(L.removeCanto(s));
 }
 
@@ -431,6 +488,8 @@ el.confirm.addEventListener('close', () => {
 // pointerdown responde na hora (sem esperar o "click"), importante para contar rápido.
 el.plus.addEventListener('pointerdown', (e) => { if (e.button === 0) { e.preventDefault(); plus(); } });
 el.minus.addEventListener('pointerdown', (e) => { if (e.button === 0) { e.preventDefault(); minus(); } });
+el.plus.addEventListener('click', flushTap);
+el.minus.addEventListener('click', flushTap);
 el.plus.addEventListener('contextmenu', (e) => e.preventDefault());
 el.minus.addEventListener('contextmenu', (e) => e.preventDefault());
 el.startPause.addEventListener('click', startPause);
