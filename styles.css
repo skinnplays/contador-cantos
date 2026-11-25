@@ -428,6 +428,14 @@ dialog[open]::backdrop { animation: fade-in .18s ease-out; }
 .arte .row { margin-top: 6px; }
 .arte .row .btn.share { flex: 2; }
 .arte-field[hidden] { display: none; }
+.placar-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.placar-row input { font-variant-numeric: tabular-nums; font-weight: 800; text-align: center; }
+.arte-hint { margin: -2px 0 10px; font-size: .75rem; line-height: 1.35; color: var(--muted); text-wrap: pretty; }
+.link-btn {
+  display: inline; padding: 2px 0; border: 0; background: none; font: inherit; font-weight: 700;
+  color: var(--brand); text-decoration: underline; cursor: pointer;
+}
+.link-btn[hidden] { display: none; }
 /* botões sempre visíveis no rodapé da janela, mesmo com rolagem */
 .arte .row {
   position: sticky; bottom: -18px; margin: 6px -18px -18px; padding: 10px 18px 14px;

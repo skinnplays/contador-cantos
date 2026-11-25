@@ -147,7 +147,7 @@ function fitCenter(ctx, text, y, maxSize, color, maxW = W - 120) {
 
 /**
  * Dados da roda + campos opcionais da arte.
- * @param {{bird:string, especie?:string, durationMin:number, total:number, dez?:number|null,
+ * @param {{bird:string, especie?:string, durationMin:number, total:number, dez?:number|null, quinze?:number|null,
  *          melhorMin:number, melhorQtd:number, date:string, owner?:string, plantel?:string, cidade?:string}} d
  * @param {keyof THEMES} themeKey
  * @returns {Promise<HTMLCanvasElement>}
@@ -188,14 +188,16 @@ export async function renderArt(d, themeKey = 'esmeralda') {
   const name = (d.bird || '').trim() || 'MEU PÁSSARO';
   metalText(ctx, name.toUpperCase(), W / 2, 655, W - 100, 215, t.metal, t.outline, t.glow);
 
-  // placar: "dez-quinze" nas rodas de 15 min, total nas de 10
-  const dezQuinze = d.durationMin === 15 && d.dez != null;
-  metalText(ctx, dezQuinze ? `${d.dez}-${d.total}` : `${d.total}`, W / 2, 905, W - 120, 235,
-    t.score, t.scoreOutline, 'rgba(0,0,0,.8)', -0.08);
+  // placar: "dez-quinze" quando as duas cantadas existem; senão só a que existe
+  const hasDez = d.dez != null, hasQuinze = d.quinze != null;
+  const dezQuinze = hasDez && hasQuinze;
+  const score = dezQuinze ? `${d.dez}-${d.quinze}` : hasQuinze ? `${d.quinze}` : hasDez ? `${d.dez}` : `${d.total}`;
+  const minutos = hasQuinze ? 15 : hasDez ? 10 : d.durationMin;
+  metalText(ctx, score, W / 2, 905, W - 120, 235, t.score, t.scoreOutline, 'rgba(0,0,0,.8)', -0.08);
   ctx.save(); ctx.font = `38px ${DISPLAY}`; ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center';
   ctx.shadowColor = 'rgba(0,0,0,.9)'; ctx.shadowBlur = 8;
   if (dezQuinze) { ctx.fillText('NOS DEZ', W / 2 - 260, 962); ctx.fillText('NOS QUINZE', W / 2 + 260, 962); }
-  else ctx.fillText(`CANTOS EM ${d.durationMin} MINUTOS`, W / 2, 962);
+  else ctx.fillText(`CANTOS EM ${minutos} MINUTOS`, W / 2, 962);
   ctx.restore();
 
   // melhor minuto

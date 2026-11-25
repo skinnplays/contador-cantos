@@ -538,15 +538,59 @@ for (const [value, label] of [['', 'Escolha a espécie'], ...SPECIES.map((x) => 
 function dezCount() {
   return s.events.filter((ms) => ms < 10 * L.MS_MIN).length;
 }
+
+// Placar da arte: começa só com o que foi marcado no app (roda de 10 → só "nos dez";
+// roda de 15 → dez e quinze). A pessoa pode corrigir ou completar a cantada que não
+// marcou no app. A correção vale só para esta roda e não é salva.
+const placarInputs = { dez: $('arteDez'), quinze: $('arteQuinze'), reset: $('artePlacarReset') };
+let placarEdit = null; // { key, dez, quinze } ou null = usar o do app
+function roundKey() { return `${s.durationMin}|${s.events.length}|${s.events.at(-1) ?? ''}`; }
+function appPlacar() {
+  return s.durationMin === 15
+    ? { dez: dezCount(), quinze: s.events.length }
+    : { dez: s.events.length, quinze: null };
+}
+function placarEdited() { return !!placarEdit && placarEdit.key === roundKey(); }
+function currentPlacar() { return placarEdited() ? placarEdit : appPlacar(); }
+function parseCount(v) {
+  const n = parseInt(String(v).trim(), 10);
+  return Number.isFinite(n) && n >= 0 ? Math.min(n, 999) : null;
+}
+function fillPlacar() {
+  const p = currentPlacar();
+  placarInputs.dez.value = p.dez ?? '';
+  placarInputs.quinze.value = p.quinze ?? '';
+  const a = appPlacar();
+  placarInputs.reset.hidden = p.dez === a.dez && p.quinze === a.quinze;
+}
+for (const input of [placarInputs.dez, placarInputs.quinze]) {
+  input.addEventListener('input', () => {
+    placarEdit = { key: roundKey(), dez: parseCount(placarInputs.dez.value), quinze: parseCount(placarInputs.quinze.value) };
+    const a = appPlacar();
+    placarInputs.reset.hidden = placarEdit.dez === a.dez && placarEdit.quinze === a.quinze;
+    scheduleArt();
+  });
+}
+placarInputs.reset.addEventListener('click', () => {
+  placarEdit = null;
+  fillPlacar();
+  refreshArt();
+});
+
 function artData() {
   const pm = L.perMinute(s);
-  const best = Math.max(0, ...pm);
+  const p = currentPlacar();
+  const a = appPlacar();
+  // melhor minuto só quando a cantada da duração marcada no app não foi alterada
+  const appKey = s.durationMin === 15 ? 'quinze' : 'dez';
+  const best = p[appKey] === a[appKey] ? Math.max(0, ...pm) : 0;
   return {
     bird: s.bird,
     especie: currentSpecies(),
     durationMin: s.durationMin,
     total: s.events.length,
-    dez: s.durationMin === 15 ? dezCount() : null,
+    dez: p.dez,
+    quinze: p.quinze,
     melhorQtd: best,
     melhorMin: pm.indexOf(best) + 1,
     date: new Date().toLocaleDateString('pt-BR'),
@@ -591,6 +635,7 @@ function fillArtForm() {
   artInputs.owner.value = artPrefs.owner || '';
   artInputs.plantel.value = artPrefs.plantel || '';
   artInputs.cidade.value = artPrefs.cidade || '';
+  fillPlacar();
   temaBtns.forEach((b) => b.setAttribute('aria-checked', String(b.dataset.tema === artPrefs.tema)));
 }
 
@@ -632,9 +677,11 @@ shareBtn.addEventListener('click', () => {
 function shareText() {
   const name = s.bird.trim() || 'Meu pássaro';
   const sp = currentSpecies();
-  const placar = s.durationMin === 15
-    ? `${dezCount()}-${s.events.length} (dez-quinze)`
-    : `${s.events.length} cantos em 10 minutos`;
+  const { dez, quinze } = currentPlacar();
+  const placar = dez != null && quinze != null ? `${dez}-${quinze} (dez-quinze)`
+    : quinze != null ? `${quinze} cantos em 15 minutos`
+    : dez != null ? `${dez} cantos em 10 minutos`
+    : `${s.events.length} cantos em ${s.durationMin} minutos`;
   return `🔥 ${sp ? sp + ' ' : ''}${name}: ${placar}!\nMarcado com o Contador Strike: https://contadorstrike.app`;
 }
 function downloadFile(file) {

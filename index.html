@@ -185,6 +185,14 @@
         <button type="button" class="tema-btn" role="radio" data-tema="prata">Prata</button>
         <button type="button" class="tema-btn" role="radio" data-tema="fogo">Fogo</button>
       </div>
+      <div class="placar-row">
+        <label class="arte-field"><span>Cantada nos dez</span>
+          <input id="arteDez" type="number" inputmode="numeric" min="0" max="999" placeholder="—" enterkeyhint="done"></label>
+        <label class="arte-field"><span>Cantada nos quinze</span>
+          <input id="arteQuinze" type="number" inputmode="numeric" min="0" max="999" placeholder="—" enterkeyhint="done"></label>
+      </div>
+      <p class="arte-hint">Vem com o que foi marcado no app. Não marcou ou marcou errado? Digite a cantada certa. Em branco não aparece na arte.
+        <button type="button" id="artePlacarReset" class="link-btn" hidden>Voltar ao que o app marcou</button></p>
       <label class="arte-field"><span>Nome do pássaro</span>
         <input id="arteBird" type="text" maxlength="40" autocomplete="off" enterkeyhint="done"></label>
       <label class="arte-field"><span>Espécie</span>
