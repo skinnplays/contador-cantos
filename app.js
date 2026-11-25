@@ -1,6 +1,7 @@
 import * as L from './logic.js';
 import { pickOffer, tierFor, SPECIES } from './offers.js';
 import { renderArt, canvasToFile } from './share.js';
+import { ilu } from './install-art.js';
 import { startTour, tourSeen, isTourOpen } from './tour.js';
 
 const KEY = 'contador-cantos.sessao.v1';
@@ -135,15 +136,61 @@ el.install.addEventListener('click', async () => {
     if (outcome === 'accepted') el.install.hidden = true;
     return;
   }
+  openInstallGuide();
+});
+
+function openInstallGuide() {
   const g = installGuide();
   track(`instalar-instrucoes-${g.kind}`);
   $('installTitle').textContent = g.title;
-  $('installSteps').innerHTML = g.steps.map((s) => `<li>${s}</li>`).join(''); // textos fixos do app
+  // textos e desenhos fixos do app (nada vem de fora)
+  $('installSteps').innerHTML = g.steps
+    .map(([text, art]) => `<li><span>${text}</span>${art ? ilu(art) : ''}</li>`).join('');
   $('installAfter').hidden = !!g.openOutside;
   $('installCopy').hidden = !g.openOutside;
   $('installCopy').textContent = 'Copiar link';
+  hideNudge();
   el.iosHelp.showModal();
-});
+  el.iosHelp.scrollTop = 0; // o foco no "Entendi" rolava a janela até o fim
+}
+
+// ---------- aviso automático de instalação (iPhone/iPad e navegador de apps) ----------
+// O iPhone não deixa o site instalar sozinho; então, na primeira visita, um balão
+// aponta para o botão certo do navegador. Some ao tocar fora e volta no máximo a cada 3 dias.
+const NUDGE_KEY = 'contador-cantos.instalar-aviso';
+const NUDGE_INTERVAL_MS = 3 * 24 * 60 * 60 * 1000;
+const nudge = $('installNudge');
+function hideNudge(remember = false) {
+  if (nudge.hidden) return;
+  nudge.hidden = true;
+  if (remember) { try { localStorage.setItem(NUDGE_KEY, String(Date.now())); } catch { /* sem armazenamento */ } }
+}
+function nudgeAllowed() {
+  let last = 0;
+  try { last = Number(localStorage.getItem(NUDGE_KEY)) || 0; } catch { return false; }
+  return Date.now() - last > NUDGE_INTERVAL_MS;
+}
+function nudgeFree() {
+  const anyOpen = [...document.querySelectorAll('dialog')].some((d) => d.open);
+  return !anyOpen && !isTourOpen() && (!L.hasStarted(s) || s.finished);
+}
+function maybeShowNudge(tries = 60) {
+  if (isInstalled() || !nudgeAllowed()) return;
+  const n = installGuide().nudge;
+  if (!n) return;
+  if (!nudgeFree()) { if (tries > 0) setTimeout(() => maybeShowNudge(tries - 1), 1500); return; }
+  $('nudgeText').innerHTML = n.text; // texto fixo do app
+  nudge.dataset.pos = n.pos;
+  nudge.hidden = false;
+  try { localStorage.setItem(NUDGE_KEY, String(Date.now())); } catch { /* sem armazenamento */ }
+  track(`instalar-aviso-${installGuide().kind}`);
+}
+$('nudgeHow').addEventListener('click', () => { track('instalar-aviso-ver'); openInstallGuide(); });
+$('nudgeClose').addEventListener('click', () => { track('instalar-aviso-fechar'); hideNudge(true); });
+document.addEventListener('pointerdown', (e) => {
+  if (!nudge.hidden && !nudge.contains(e.target)) hideNudge(true);
+}, { capture: true });
+setTimeout(() => maybeShowNudge(), 2500);
 
 $('installCopy').addEventListener('click', async () => {
   const url = 'https://contadorstrike.app/';
@@ -168,25 +215,30 @@ function installGuide() {
   const share = '<b>Compartilhar</b> (o quadrado com a seta para cima)';
   const add = 'Role a lista e toque em <b>Adicionar à Tela de Início</b>';
 
+  // cada passo: [texto, desenho opcional do install-art.js]
+  // nudge: balão automático (pos = para onde a seta aponta)
   if (inApp) {
     return {
       kind: `app-${appName.toLowerCase()}`, openOutside: true, title: `Abra no ${outside} para instalar`,
       steps: [
-        `Você está no navegador do ${appName}, que não instala apps.`,
-        `Toque nos três pontinhos <b>${isIOS ? '⋯' : '⋮'}</b> no canto de cima e escolha <b>Abrir no navegador</b> (ou <b>Abrir no ${outside}</b>).`,
-        `Se não tiver essa opção, toque em <b>Copiar link</b> aqui embaixo e cole no ${outside}.`,
-        'Lá, toque em <b>⬇ Instalar</b> de novo.',
+        [`Você está no navegador do ${appName}, que não instala apps.`],
+        [`Toque nos três pontinhos <b>${isIOS ? '⋯' : '⋮'}</b> no canto de cima.`, 'inappDots'],
+        [`Escolha <b>Abrir no navegador</b> (ou <b>Abrir no ${outside}</b>).`, 'inappOpen'],
+        [`Não tem essa opção? Toque em <b>Copiar link</b> aqui embaixo e cole no ${outside}.`],
+        ['Lá, toque em <b>⬇ Instalar</b> de novo.', 'installBtn'],
       ],
+      nudge: { pos: 'top-right', text: `Toque em <b>${isIOS ? '⋯' : '⋮'}</b> aqui em cima e escolha <b>Abrir no navegador</b>.` },
     };
   }
   if (!isIOS) {
     return {
       kind: 'outros', title: 'Instalar no Android',
       steps: [
-        'Abra este site no <b>Chrome</b>.',
-        'Toque no menu <b>⋮</b> (canto superior direito).',
-        'Toque em <b>Instalar app</b> ou <b>Adicionar à tela inicial</b>.',
+        ['Abra este site no <b>Chrome</b>.'],
+        ['Toque no menu <b>⋮</b> (canto de cima, à direita).', 'androidDots'],
+        ['Toque em <b>Instalar app</b> ou <b>Adicionar à tela inicial</b>.', 'androidInstall'],
       ],
+      nudge: null,
     };
   }
 
@@ -203,21 +255,29 @@ function installGuide() {
     return {
       kind: 'iphone-safari26', title: `Instalar no ${device}`,
       steps: [
-        `Toque nos três pontinhos <b>⋯</b> ${iPad ? 'no alto da tela' : 'ao lado do endereço do site, embaixo à direita'}.`,
-        `Toque em ${share}.`,
-        `${add} (se não aparecer, toque em <b>Ver mais</b>).`,
-        'Deixe <b>Abrir como App Web</b> ligado e toque em <b>Adicionar</b>.',
+        [`Toque nos três pontinhos <b>⋯</b> ${iPad ? 'no alto da tela' : 'ao lado do endereço do site, embaixo à direita'}.`, 'bar26'],
+        [`Toque em ${share}.`, 'menuShare'],
+        [`${add} (se não aparecer, toque em <b>Ver mais</b>).`, 'sheetAdd'],
+        ['Deixe <b>Abrir como App Web</b> ligado e toque em <b>Adicionar</b>.', 'confirm26'],
       ],
+      nudge: {
+        pos: iPad ? 'top-right' : 'bottom-right',
+        text: `Toque em <b>⋯</b> ${iPad ? 'aqui em cima' : 'aqui embaixo'}, depois em <b>Compartilhar</b> e <b>Adicionar à Tela de Início</b>.`,
+      },
     };
   }
   if (browser === 'Safari') {
     return {
       kind: 'iphone-safari', title: `Instalar no ${device}`,
       steps: [
-        `Toque no botão ${share}, ${iPad ? 'no alto da tela, à direita' : 'na barra de baixo (ou de cima) do Safari'}.`,
-        `${add}.`,
-        'Toque em <b>Adicionar</b>, no canto de cima.',
+        [`Toque no botão ${share}, ${iPad ? 'no alto da tela, à direita' : 'na barra de baixo (ou de cima) do Safari'}.`, iPad ? 'topShare' : 'barOld'],
+        [`${add}.`, 'sheetAdd'],
+        ['Toque em <b>Adicionar</b>, no canto de cima.', 'confirm'],
       ],
+      nudge: {
+        pos: iPad ? 'top-right' : 'bottom-center',
+        text: `Toque em <b>Compartilhar</b> ${iPad ? 'aqui em cima' : 'aqui embaixo'} e depois em <b>Adicionar à Tela de Início</b>.`,
+      },
     };
   }
   // Chrome, Edge, Firefox... só instalam no iPhone a partir do iOS 16.4
@@ -225,24 +285,29 @@ function installGuide() {
     const first = browser === 'Chrome'
       ? `Toque em ${share}, no alto da tela, ao lado do endereço do site.`
       : `Abra o menu do ${browser} e toque em ${share}.`;
+    const chrome = browser === 'Chrome';
     return {
       kind: `iphone-${browser.toLowerCase().replace(/\s/g, '-')}`, title: `Instalar no ${device}`,
       steps: [
-        first,
-        `${add} (se não aparecer, toque em <b>Mais</b> ou <b>Editar ações</b>).`,
-        'Toque em <b>Adicionar</b>.',
-        'Não achou a opção? Abra <b>contadorstrike.app</b> no <b>Safari</b> e instale por lá.',
+        [first, chrome ? 'topShare' : ''],
+        [`${add} (se não aparecer, toque em <b>Mais</b> ou <b>Editar ações</b>).`, 'sheetAdd'],
+        ['Toque em <b>Adicionar</b>.', 'confirm'],
+        ['Não achou a opção? Abra <b>contadorstrike.app</b> no <b>Safari</b> e instale por lá.'],
       ],
+      nudge: chrome
+        ? { pos: 'top-right', text: 'Toque em <b>Compartilhar</b> aqui em cima e depois em <b>Adicionar à Tela de Início</b>.' }
+        : { pos: 'none', text: `Dá para instalar este app no seu ${device}. Toque em <b>Ver como</b>.` },
     };
   }
   return {
     kind: 'iphone-abrir-safari', openOutside: true, title: 'Abra no Safari para instalar',
     steps: [
-      `Neste navegador o ${device} não deixa instalar o app.`,
-      'Toque em <b>Copiar link</b> aqui embaixo.',
-      'Abra o <b>Safari</b>, cole o link na barra de endereço e abra o site.',
-      'Lá, toque em <b>⬇ Instalar</b> de novo.',
+      [`Neste navegador o ${device} não deixa instalar o app.`],
+      ['Toque em <b>Copiar link</b> aqui embaixo.'],
+      ['Abra o <b>Safari</b>, cole o link na barra de endereço e abra o site.', 'safariUrl'],
+      ['Lá, toque em <b>⬇ Instalar</b> de novo.', 'installBtn'],
     ],
+    nudge: { pos: 'none', text: 'Para instalar o app, abra este site no <b>Safari</b>. Toque em <b>Ver como</b>.' },
   };
 }
 

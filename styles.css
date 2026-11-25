@@ -93,6 +93,68 @@ button { font: inherit; color: inherit; touch-action: manipulation; }
 .install[hidden] { display: none; }
 .steps { margin: 0 0 12px; padding-left: 20px; line-height: 1.5; }
 
+/* passo a passo com desenhos das telas */
+.ilu-steps li { margin-bottom: 12px; }
+.ilu-steps li::marker { font-weight: 800; color: var(--brand); }
+.ilu {
+  display: block; width: 100%; max-width: 280px; height: auto; margin-top: 6px;
+  font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; font-size: 14px;
+}
+.ilu .bar { fill: var(--surface-2); }
+.ilu .card { fill: var(--bg); stroke: var(--line); }
+.ilu .pill { fill: var(--bg); stroke: var(--line); }
+.ilu .sep { stroke: var(--line); }
+.ilu .dot { fill: var(--text); }
+.ilu .ic { fill: none; stroke: var(--text); stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.ilu text { fill: var(--text); }
+.ilu .url { fill: var(--muted); font-size: 12.5px; }
+.ilu .dim { fill: var(--muted); }
+.ilu .strong { font-weight: 700; }
+.ilu .link { fill: #0a84ff; font-weight: 700; }
+.ilu .on { fill: #34c759; }
+.ilu .knob { fill: #fff; }
+.ilu .accent { fill: var(--accent); }
+.ilu .accent-ink { fill: var(--accent-ink); font-weight: 700; font-size: 13px; }
+.ilu .hi { fill: none; stroke: var(--accent); stroke-width: 3; animation: hi-pulse 1.2s ease-in-out infinite; }
+@keyframes hi-pulse { 50% { opacity: .25; } }
+
+/* balão automático "Instale o app" com seta para o botão do navegador */
+.nudge {
+  position: fixed; z-index: 50; left: 12px; right: 12px; margin: 0 auto; max-width: 420px;
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 12px 12px 12px 12px; border-radius: 16px;
+  background: var(--surface); color: var(--text); border: 2px solid var(--accent);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .45);
+  animation: nudge-in .25s ease-out;
+}
+.nudge[hidden] { display: none; }
+.nudge[data-pos^="bottom"], .nudge[data-pos="none"] { bottom: calc(26px + env(safe-area-inset-bottom)); }
+.nudge[data-pos^="top"] { top: calc(26px + env(safe-area-inset-top)); }
+.nudge img { flex: none; border-radius: 10px; }
+.nudge-body { flex: 1; min-width: 0; }
+.nudge-body strong { display: block; font-size: .98rem; margin: 2px 0 3px; }
+.nudge-body p { margin: 0 0 10px; font-size: .88rem; line-height: 1.4; text-wrap: pretty; }
+.nudge-body .btn { padding: 9px 18px; font-size: .95rem; }
+.nudge-x {
+  flex: none; width: 40px; height: 40px; margin: -6px -6px 0 0; border: 0; border-radius: 50%;
+  background: transparent; color: var(--muted); font-size: 1.05rem; cursor: pointer;
+}
+/* seta: triângulo amarelo que pula na direção do botão */
+.nudge-arrow {
+  position: absolute; width: 0; height: 0; border: 14px solid transparent;
+  animation: nudge-bounce-down 1s ease-in-out infinite;
+}
+.nudge[data-pos="none"] .nudge-arrow { display: none; }
+.nudge[data-pos^="bottom"] .nudge-arrow { top: 100%; border-top-color: var(--accent); border-bottom: 0; }
+.nudge[data-pos^="top"] .nudge-arrow {
+  bottom: 100%; border-bottom-color: var(--accent); border-top: 0; animation-name: nudge-bounce-up;
+}
+.nudge[data-pos$="right"] .nudge-arrow { right: 22px; }
+.nudge[data-pos="bottom-center"] .nudge-arrow { left: calc(50% - 14px); }
+@keyframes nudge-bounce-down { 50% { transform: translateY(7px); } }
+@keyframes nudge-bounce-up { 50% { transform: translateY(-7px); } }
+@keyframes nudge-in { from { opacity: 0; transform: translateY(10px); } }
+
 .wake {
   font-size: .75rem; padding: 4px 10px; border-radius: 999px;
   background: var(--surface-2); color: var(--muted); white-space: nowrap;

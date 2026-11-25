@@ -135,7 +135,7 @@
   <dialog id="iosHelp" class="confirm">
     <form method="dialog">
       <p><strong id="installTitle">Instalar no celular</strong></p>
-      <ol class="steps" id="installSteps"></ol>
+      <ol class="steps ilu-steps" id="installSteps"></ol>
       <p id="installAfter">Depois, abra pelo ícone <b>Contador Strike</b> na tela inicial: ele abre em tela cheia.</p>
       <div class="row">
         <button type="button" id="installCopy" class="btn ghost" hidden>Copiar link</button>
@@ -143,6 +143,17 @@
       </div>
     </form>
   </dialog>
+
+  <div id="installNudge" class="nudge" role="region" aria-label="Instalar o app" hidden>
+    <img src="icon-180.png" alt="" width="44" height="44">
+    <div class="nudge-body">
+      <strong>Instale o Contador Strike</strong>
+      <p id="nudgeText"></p>
+      <button type="button" id="nudgeHow" class="btn primary">Ver como</button>
+    </div>
+    <button type="button" id="nudgeClose" class="nudge-x" aria-label="Fechar">✕</button>
+    <span class="nudge-arrow" aria-hidden="true"></span>
+  </div>
 
   <dialog id="offer" class="confirm offer">
     <form method="dialog">
