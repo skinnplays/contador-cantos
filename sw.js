@@ -1,6 +1,6 @@
 // Busca sempre a versão mais nova na internet. Sem sinal (ou se demorar mais de 4 s),
 // usa a cópia guardada, assim o app funciona offline e as atualizações chegam na hora.
-const CACHE = 'contador-cantos-v30';
+const CACHE = 'contador-cantos-v31';
 const ASSETS = [
   './', 'index.html', 'styles.css', 'app.js', 'logic.js', 'offers.js', 'share.js', 'tour.js', 'count.js', 'anton-latin.woff2', 'manifest.webmanifest',
   'logo-96.png', 'icon-180.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png',
@@ -40,6 +40,11 @@ self.addEventListener('fetch', (e) => {
     const cache = await caches.open(CACHE);
     try {
       const res = await fetchFresh(req);
+      // Endereço mudou (ex.: troca de domínio): manda a página para o novo endereço.
+      // Entregar a resposta redirecionada direto faz o iPhone não abrir o app.
+      if (res.redirected) {
+        return req.mode === 'navigate' ? Response.redirect(res.url, 302) : res;
+      }
       if (res.ok) cache.put(req, res.clone());
       return res;
     } catch {
