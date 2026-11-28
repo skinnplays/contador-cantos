@@ -149,10 +149,31 @@ function openInstallGuide() {
   $('installAfter').hidden = !!g.openOutside;
   $('installCopy').hidden = !g.openOutside;
   $('installCopy').textContent = 'Copiar link';
+  $('installNota').hidden = !pointerFor(g);
   hideNudge();
+  el.iosHelp.returnValue = ''; // fechar com "voltar"/Esc não mostra a seta
   el.iosHelp.showModal();
   el.iosHelp.scrollTop = 0; // o foco no "Entendi" rolava a janela até o fim
 }
+
+// Os desenhos do passo a passo não são botões: tem gente tocando neles. Ao fechar
+// o passo a passo (ou tocar num desenho), a seta amarela aponta o botão de verdade.
+const pointerFor = (g) => { const n = g.point || g.nudge; return n && n.pos !== 'none' ? n : null; };
+function pointToRealButton() {
+  const n = pointerFor(installGuide());
+  if (!n || isInstalled()) return;
+  $('nudgeTitle').textContent = 'É aqui, no navegador';
+  $('nudgeText').innerHTML = n.text; // texto fixo do app
+  nudge.dataset.pos = n.pos;
+  nudge.classList.add('strong');
+  nudge.hidden = false;
+}
+el.iosHelp.addEventListener('close', () => { if (el.iosHelp.returnValue === 'ok') pointToRealButton(); });
+$('installSteps').addEventListener('click', (e) => {
+  if (!e.target.closest('.ilu')) return;
+  track('instalar-tocou-desenho');
+  el.iosHelp.close('ok');
+});
 
 // ---------- aviso automático de instalação (iPhone/iPad e navegador de apps) ----------
 // O iPhone não deixa o site instalar sozinho; então, na primeira visita, um balão
@@ -179,8 +200,10 @@ function maybeShowNudge(tries = 60) {
   const n = installGuide().nudge;
   if (!n) return;
   if (!nudgeFree()) { if (tries > 0) setTimeout(() => maybeShowNudge(tries - 1), 1500); return; }
+  $('nudgeTitle').textContent = 'Instale o Contador Strike';
   $('nudgeText').innerHTML = n.text; // texto fixo do app
   nudge.dataset.pos = n.pos;
+  nudge.classList.remove('strong');
   nudge.hidden = false;
   try { localStorage.setItem(NUDGE_KEY, String(Date.now())); } catch { /* sem armazenamento */ }
   track(`instalar-aviso-${installGuide().kind}`);
@@ -214,6 +237,8 @@ function installGuide() {
   const outside = isIOS ? 'Safari' : 'Chrome';
   const share = '<b>Compartilhar</b> (o quadrado com a seta para cima)';
   const add = 'Role a lista e toque em <b>Adicionar à Tela de Início</b>';
+  // no iPhone a janela do Compartilhar abre fechada: o "Adicionar" fica escondido na setinha
+  const more = ['Na janela que abrir, toque na <b>setinha para baixo</b> (ou em <b>Ver mais</b>) para abrir a lista completa.', 'sheetMore'];
 
   // cada passo: [texto, desenho opcional do install-art.js]
   // nudge: balão automático (pos = para onde a seta aponta)
@@ -230,6 +255,18 @@ function installGuide() {
       nudge: { pos: 'top-right', text: `Toque em <b>${isIOS ? '⋯' : '⋮'}</b> aqui em cima e escolha <b>Abrir no navegador</b>.` },
     };
   }
+  if (!isIOS && /SamsungBrowser/i.test(ua)) {
+    return {
+      kind: 'samsung', title: 'Instalar no Samsung Internet',
+      steps: [
+        ['Toque no menu <b>≡</b> (três risquinhos), na barra de baixo, à direita.', 'samsungMenu'],
+        ['Toque em <b>Adicionar página a</b>.', 'samsungAdd'],
+        ['Escolha <b>Tela inicial</b> e toque em <b>Adicionar</b>.', 'samsungTarget'],
+        ['Se aparecer um ícone de <b>download/instalar</b> na barra de endereço, pode tocar nele também.'],
+      ],
+      nudge: { pos: 'bottom-right', text: 'Toque em <b>≡</b> aqui embaixo, depois em <b>Adicionar página a</b> e <b>Tela inicial</b>.' },
+    };
+  }
   if (!isIOS) {
     return {
       kind: 'outros', title: 'Instalar no Android',
@@ -239,6 +276,8 @@ function installGuide() {
         ['Toque em <b>Instalar app</b> ou <b>Adicionar à tela inicial</b>.', 'androidInstall'],
       ],
       nudge: null,
+      // só a seta depois do passo a passo (sem balão automático no Android)
+      point: { pos: 'top-right', text: 'Toque no menu <b>⋮</b> aqui em cima e depois em <b>Instalar app</b>.' },
     };
   }
 
@@ -257,12 +296,13 @@ function installGuide() {
       steps: [
         [`Toque nos três pontinhos <b>⋯</b> ${iPad ? 'no alto da tela' : 'ao lado do endereço do site, embaixo à direita'}.`, 'bar26'],
         [`Toque em ${share}.`, 'menuShare'],
-        [`${add} (se não aparecer, toque em <b>Ver mais</b>).`, 'sheetAdd'],
+        more,
+        [`${add}.`, 'sheetAdd'],
         ['Deixe <b>Abrir como App Web</b> ligado e toque em <b>Adicionar</b>.', 'confirm26'],
       ],
       nudge: {
         pos: iPad ? 'top-right' : 'bottom-right',
-        text: `Toque em <b>⋯</b> ${iPad ? 'aqui em cima' : 'aqui embaixo'}, depois em <b>Compartilhar</b> e <b>Adicionar à Tela de Início</b>.`,
+        text: `Toque em <b>⋯</b> ${iPad ? 'aqui em cima' : 'aqui embaixo'}, depois em <b>Compartilhar</b>, na <b>setinha</b> e em <b>Adicionar à Tela de Início</b>.`,
       },
     };
   }
@@ -271,12 +311,13 @@ function installGuide() {
       kind: 'iphone-safari', title: `Instalar no ${device}`,
       steps: [
         [`Toque no botão ${share}, ${iPad ? 'no alto da tela, à direita' : 'na barra de baixo (ou de cima) do Safari'}.`, iPad ? 'topShare' : 'barOld'],
+        more,
         [`${add}.`, 'sheetAdd'],
         ['Toque em <b>Adicionar</b>, no canto de cima.', 'confirm'],
       ],
       nudge: {
         pos: iPad ? 'top-right' : 'bottom-center',
-        text: `Toque em <b>Compartilhar</b> ${iPad ? 'aqui em cima' : 'aqui embaixo'} e depois em <b>Adicionar à Tela de Início</b>.`,
+        text: `Toque em <b>Compartilhar</b> ${iPad ? 'aqui em cima' : 'aqui embaixo'}, na <b>setinha</b> e em <b>Adicionar à Tela de Início</b>.`,
       },
     };
   }
@@ -290,12 +331,13 @@ function installGuide() {
       kind: `iphone-${browser.toLowerCase().replace(/\s/g, '-')}`, title: `Instalar no ${device}`,
       steps: [
         [first, chrome ? 'topShare' : ''],
+        more,
         [`${add} (se não aparecer, toque em <b>Mais</b> ou <b>Editar ações</b>).`, 'sheetAdd'],
         ['Toque em <b>Adicionar</b>.', 'confirm'],
         ['Não achou a opção? Abra <b>contadorstrike.app</b> no <b>Safari</b> e instale por lá.'],
       ],
       nudge: chrome
-        ? { pos: 'top-right', text: 'Toque em <b>Compartilhar</b> aqui em cima e depois em <b>Adicionar à Tela de Início</b>.' }
+        ? { pos: 'top-right', text: 'Toque em <b>Compartilhar</b> aqui em cima, na <b>setinha</b> e em <b>Adicionar à Tela de Início</b>.' }
         : { pos: 'none', text: `Dá para instalar este app no seu ${device}. Toque em <b>Ver como</b>.` },
     };
   }

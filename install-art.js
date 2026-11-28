@@ -28,6 +28,12 @@ const ART = {
   bar26: () => svg(54, '<rect class="bar" width="260" height="54" rx="14"/>' + urlPill()
     + '<circle class="pill" cx="226" cy="27" r="17"/>' + dots(226, 27) + hiCircle(226, 27, 22)),
   menuShare: () => menu([['Compartilhar', true, 'share'], ['Adicionar aos Favoritos']]),
+  // janela do Compartilhar no iPhone: a lista vem fechada e abre na setinha
+  sheetMore: () => svg(112, '<rect class="card" x="1" y="1" width="258" height="110" rx="14"/>'
+    + [40, 96, 152, 208].map((x) => `<rect class="pill" x="${x - 20}" y="12" width="40" height="40" rx="11"/>`).join('')
+    + '<line class="sep" x1="16" y1="64" x2="244" y2="64"/>'
+    + '<text x="18" y="92" class="strong">Ver mais</text>'
+    + '<g class="ic"><path d="M224 82l8 8 8-8"/></g>' + hiRect(6, 70, 248, 34)),
   sheetAdd: () => menu([['Copiar'], ['Adicionar à Tela de Início', true, 'add']]),
   confirm26: () => svg(96, '<rect class="card" x="1" y="1" width="258" height="94" rx="14"/>'
     + '<text x="16" y="30" class="dim">Cancelar</text><text x="242" y="30" text-anchor="end" class="link">Adicionar</text>'
@@ -54,6 +60,13 @@ const ART = {
   androidDots: () => svg(54, '<rect class="bar" width="260" height="54" rx="14"/>' + urlPill(206)
     + dots(240, 27, true) + hiCircle(240, 27, 18)),
   androidInstall: () => menu([['Nova guia'], ['Instalar app', true]]),
+  // Samsung Internet: barra de baixo com o menu ≡ no canto direito
+  samsungMenu: () => svg(54, '<rect class="bar" width="260" height="54" rx="14"/>'
+    + '<g class="ic"><path d="M22 20l-8 7 8 7"/><path d="M62 20l8 7-8 7"/><path d="M104 28l12-10 12 10M108 26v10h16V26"/>'
+    + '<rect x="150" y="17" width="20" height="20" rx="4"/><path d="M222 19h18M222 27h18M222 35h18"/></g>'
+    + hiCircle(231, 27, 19)),
+  samsungAdd: () => menu([['Favoritos'], ['Adicionar página a', true, 'add']]),
+  samsungTarget: () => menu([['Favoritos'], ['Tela inicial', true]]),
   safariUrl: () => svg(54, '<rect class="bar" width="260" height="54" rx="14"/>' + urlPill(236)
     + hiRect(8, 6, 244, 42, 21)),
   installBtn: () => svg(50, '<rect class="accent" x="80" y="9" width="100" height="32" rx="16"/>'

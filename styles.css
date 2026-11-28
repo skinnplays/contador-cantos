@@ -543,3 +543,12 @@ dialog[open]::backdrop { animation: fade-in .18s ease-out; }
 .tour-actions .btn { flex: 1; padding-block: 11px; }
 .tour-actions .btn[hidden] { display: none; }
 @media (prefers-reduced-motion: reduce) { .tour-spot, .tour-card { transition: none; } }
+
+/* passo a passo de instalação: os desenhos são exemplo, a seta mostra o botão de verdade */
+.ilu-nota { margin: 0 0 10px; padding: 8px 12px; border-radius: 10px; background: var(--surface-2); color: var(--muted); font-size: .86rem; line-height: 1.4; text-wrap: pretty; }
+.ilu-nota[hidden] { display: none; }
+#installSteps .ilu { cursor: default; }
+.nudge.strong { box-shadow: 0 0 0 4px rgba(224, 165, 38, .35), 0 10px 30px rgba(0, 0, 0, .45); }
+.nudge.strong .nudge-arrow { border-width: 20px; }
+.nudge.strong[data-pos$="right"] .nudge-arrow { right: 16px; }
+.nudge.strong[data-pos="bottom-center"] .nudge-arrow { left: calc(50% - 20px); }
