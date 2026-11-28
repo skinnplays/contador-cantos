@@ -67,7 +67,11 @@
     </header>
 
     <section class="setup">
-      <input id="bird" class="bird" type="text" placeholder="Nome do pássaro" autocomplete="off" maxlength="40" enterkeyhint="done" aria-label="Nome do pássaro">
+      <input id="bird" class="bird" type="text" placeholder="Nome da ave" autocomplete="off" maxlength="40" enterkeyhint="done" aria-label="Nome do pássaro" list="birdNames">
+      <datalist id="birdNames"></datalist>
+      <button type="button" id="histBtn" class="hist-btn" aria-label="Histórico das aves" title="Histórico das aves">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3z"/><path d="M5 17a3 3 0 013-3h11"/><path d="M9 8h6"/></svg>
+      </button>
       <div class="duration" role="radiogroup" aria-label="Duração da roda">
         <button type="button" role="radio" data-min="10">10 min</button>
         <button type="button" role="radio" data-min="15">15 min</button>
@@ -78,6 +82,7 @@
       <div class="timer" id="timer" aria-live="off">15:00</div>
       <div class="progress" aria-hidden="true"><div id="bar"></div></div>
       <div class="status" id="status">Toque em +1 ou Iniciar para começar</div>
+      <button type="button" id="histChip" class="hist-chip" hidden></button>
     </section>
 
     <section class="stats">
@@ -135,9 +140,33 @@
     </div>
   </div>
 
+  <dialog id="histDlg" class="confirm hist">
+    <form method="dialog">
+      <!-- lista de todas as aves -->
+      <div id="histAvesView">
+        <p class="hist-tit"><strong id="histAvesTitle" tabindex="-1">Histórico das aves</strong></p>
+        <ul class="hist-aves" id="histAves"></ul>
+        <p class="hist-nota">Fica salvo só neste celular. Cada roda que chega ao fim com o nome do pássaro entra aqui sozinha.</p>
+        <div class="row"><button value="ok" class="btn primary">Fechar</button></div>
+      </div>
+      <!-- histórico de uma ave -->
+      <div id="histAveView" hidden>
+        <button type="button" id="histVoltar" class="hist-voltar">‹ Todas as aves</button>
+        <p class="hist-tit"><strong id="histTitle" tabindex="-1"></strong><span class="muted" id="histSub"></span></p>
+        <div class="hist-cards" id="histCards"></div>
+        <div id="histChart"></div>
+        <ol class="hist-list" id="histList"></ol>
+        <div class="row">
+          <button type="button" id="histClear" class="btn ghost">Apagar</button>
+          <button type="button" id="histUsar" class="btn primary">Contar esta ave</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
   <dialog id="iosHelp" class="confirm">
     <form method="dialog">
-      <p><strong id="installTitle">Instalar no celular</strong></p>
+      <p><strong id="installTitle" tabindex="-1" autofocus>Instalar no celular</strong></p>
       <p class="ilu-nota" id="installNota">Os desenhos são só um exemplo. Toque em <b>Entendi</b> e uma seta amarela mostra o botão de verdade do seu navegador.</p>
       <ol class="steps ilu-steps" id="installSteps"></ol>
       <p id="installAfter">Depois, abra pelo ícone <b>Contador Strike</b> na tela inicial: ele abre em tela cheia.</p>

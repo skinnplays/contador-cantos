@@ -29,11 +29,11 @@ const ART = {
     + '<circle class="pill" cx="226" cy="27" r="17"/>' + dots(226, 27) + hiCircle(226, 27, 22)),
   menuShare: () => menu([['Compartilhar', true, 'share'], ['Adicionar aos Favoritos']]),
   // janela do Compartilhar no iPhone: a lista vem fechada e abre na setinha
-  sheetMore: () => svg(112, '<rect class="card" x="1" y="1" width="258" height="110" rx="14"/>'
-    + [40, 96, 152, 208].map((x) => `<rect class="pill" x="${x - 20}" y="12" width="40" height="40" rx="11"/>`).join('')
-    + '<line class="sep" x1="16" y1="64" x2="244" y2="64"/>'
-    + '<text x="18" y="92" class="strong">Ver mais</text>'
-    + '<g class="ic"><path d="M224 82l8 8 8-8"/></g>' + hiRect(6, 70, 248, 34)),
+  sheetMore: () => svg(84, '<rect class="card" x="1" y="1" width="258" height="82" rx="14"/>'
+    + [40, 96, 152, 208].map((x) => `<rect class="pill" x="${x - 15}" y="9" width="30" height="24" rx="8"/>`).join('')
+    + '<line class="sep" x1="16" y1="40" x2="244" y2="40"/>'
+    + '<text x="18" y="67" class="strong">Ver mais</text>'
+    + '<g class="ic"><path d="M224 58l8 8 8-8"/></g>' + hiRect(6, 45, 248, 34)),
   sheetAdd: () => menu([['Copiar'], ['Adicionar à Tela de Início', true, 'add']]),
   confirm26: () => svg(96, '<rect class="card" x="1" y="1" width="258" height="94" rx="14"/>'
     + '<text x="16" y="30" class="dim">Cancelar</text><text x="242" y="30" text-anchor="end" class="link">Adicionar</text>'

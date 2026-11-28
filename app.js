@@ -1,4 +1,5 @@
 import * as L from './logic.js';
+import * as H from './history.js';
 import { pickOffer, tierFor, SPECIES } from './offers.js';
 import { renderArt, canvasToFile } from './share.js';
 import { ilu } from './install-art.js';
@@ -64,8 +65,10 @@ function save() {
 
 function update(next) {
   if (next === s) return;
+  const finishing = !s.finished && next.finished;
   s = next;
   save();
+  if (finishing) recordRound();
   render();
 }
 
@@ -153,7 +156,10 @@ function openInstallGuide() {
   hideNudge();
   el.iosHelp.returnValue = ''; // fechar com "voltar"/Esc não mostra a seta
   el.iosHelp.showModal();
-  el.iosHelp.scrollTop = 0; // o foco no "Entendi" rolava a janela até o fim
+  // o foco vai para o título (autofocus); o iPhone ainda rola depois de abrir,
+  // então volta para o topo de novo nos próximos quadros
+  const topo = () => { el.iosHelp.scrollTop = 0; };
+  topo(); requestAnimationFrame(topo); setTimeout(topo, 120); setTimeout(topo, 350);
 }
 
 // Os desenhos do passo a passo não são botões: tem gente tocando neles. Ao fechar
@@ -544,7 +550,7 @@ el.bird.addEventListener('keydown', (e) => { if (e.key === 'Enter') el.bird.blur
 
 // Teclado ou controle Bluetooth (passador de slides), se alguém usar.
 document.addEventListener('keydown', (e) => {
-  if (e.target === el.bird || isTourOpen() || el.confirm.open || el.iosHelp.open || offerDlg.open || pushDlg.open || artDlg.open || e.repeat) return;
+  if (e.target === el.bird || isTourOpen() || el.confirm.open || el.iosHelp.open || histDlg?.open || offerDlg.open || pushDlg.open || artDlg.open || e.repeat) return;
   if ([' ', 'Enter', 'ArrowUp', 'ArrowRight', 'PageDown', '+'].includes(e.key)) { e.preventDefault(); plus(); }
   else if (['Backspace', 'ArrowDown', 'ArrowLeft', 'PageUp', '-'].includes(e.key)) { e.preventDefault(); minus(); }
 });
@@ -634,7 +640,146 @@ function render() {
     b.setAttribute('aria-checked', String(Number(b.dataset.min) === s.durationMin));
     b.disabled = started;
   });
+  renderHistChip();
 }
+
+// ---------- histórico do pássaro (só neste celular) ----------
+var hist = (() => { try { return H.parseHistory(localStorage.getItem(H.HISTORY_KEY)); } catch { return H.emptyHistory(); } })();
+function saveHist() {
+  try { localStorage.setItem(H.HISTORY_KEY, JSON.stringify(hist)); } catch { /* sem armazenamento */ }
+  histKey = '';
+  fillBirdNames();
+}
+function recordRound() {
+  const r = H.roundFromSession(s, Date.now(), L.perMinute(s), L.vistos(s));
+  if (!r || hist.rounds.some((x) => x.id === r.id)) return;
+  hist = H.addRound(hist, r);
+  saveHist();
+  track('historico-roda-salva');
+}
+function fillBirdNames() {
+  $('birdNames').innerHTML = H.knownBirds(hist).map((n) => `<option value="${escapeHtml(n)}"></option>`).join('');
+}
+const escapeHtml = (t) => String(t).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+const mmss = (ms) => { const t = Math.round(ms / 1000); return `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`; };
+var histChip = $('histChip');
+var histKey = '';
+function currentRoundId() {
+  const r = s.finished ? H.roundFromSession(s, 0, [], []) : null;
+  return r?.id ?? null;
+}
+function renderHistChip() {
+  if (!histChip || !hist) return; // ainda carregando
+  const k = `${H.birdKey(s.bird)}|${s.durationMin}|${s.finished}|${s.events.length}|${hist.rounds.length}`;
+  if (k === histKey) return;
+  histKey = k;
+  const rounds = H.roundsOf(hist, s.bird);
+  if (!rounds.length) { histChip.hidden = true; return; }
+  const curId = currentRoundId();
+  const cur = curId && rounds.find((r) => r.id === curId);
+  let html;
+  if (cur) {
+    const c = H.compare(rounds, cur);
+    html = c.kind === 'record' ? `🏆 <b>Novo recorde!</b> Antes: ${c.before}`
+      : c.kind === 'first' ? '📒 Primeira roda salva no histórico'
+      : c.diff > 0 ? `📈 <b>${c.diff} acima</b> da média dele (${c.avg})`
+      : c.diff < 0 ? `📉 ${-c.diff} abaixo da média dele (${c.avg})` : `Na média dele (${c.avg})`;
+  } else {
+    const sm = H.summary(rounds);
+    const d = sm[s.durationMin] ? s.durationMin : Number(Object.keys(sm)[0]);
+    const x = sm[d];
+    html = `📒 ${rounds.length} ${rounds.length === 1 ? 'roda' : 'rodas'} · recorde <b>${x.best}</b> · média ${x.avg} <span class="muted">(${d} min)</span>`;
+  }
+  histChip.innerHTML = `${html} <span class="hist-mais">›</span>`;
+  histChip.hidden = false;
+}
+
+var histDlg = $('histDlg');
+var histAtual = ''; // ave aberta (chave normalizada)
+const fmtDate = (t) => new Date(t).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+function showHistDlg(view) {
+  $('histAvesView').hidden = view !== 'aves';
+  $('histAveView').hidden = view !== 'ave';
+  if (!histDlg.open) histDlg.showModal();
+  $(view === 'aves' ? 'histAvesTitle' : 'histTitle').focus({ preventScroll: true });
+  const topo = () => { histDlg.scrollTop = 0; };
+  topo(); requestAnimationFrame(topo); setTimeout(topo, 120);
+}
+// lista de todas as aves (botão 📒 no topo)
+function openBirdList() {
+  track('historico-lista');
+  const aves = H.birdsList(hist);
+  $('histAves').innerHTML = aves.length ? aves.map((b) => {
+    const rec = [15, 10].filter((d) => b.best[d]).map((d) => `<b>${b.best[d]}</b> em ${d} min`).join(' · ');
+    return `<li><button type="button" class="hist-ave" data-key="${escapeHtml(b.key)}">
+      <span class="hist-ave-nome">${escapeHtml(b.bird)}</span>
+      <span class="muted">${b.count} ${b.count === 1 ? 'roda' : 'rodas'} · recorde ${rec} · última ${fmtDate(b.last)}</span>
+      <span class="hist-mais" aria-hidden="true">›</span></button></li>`;
+  }).join('') : '<li class="hist-vazio">Nenhuma roda salva ainda.<br>Digite o nome do pássaro antes de contar: quando a roda terminar, ela entra aqui sozinha.</li>';
+  showHistDlg('aves');
+}
+// histórico de uma ave
+function openHistory(key) {
+  const rounds = H.roundsByKey(hist, key);
+  if (!rounds.length) return openBirdList();
+  histAtual = key;
+  track('historico-aberto');
+  $('histTitle').textContent = rounds[0].bird;
+  $('histSub').textContent = ` · ${rounds.length} ${rounds.length === 1 ? 'roda salva' : 'rodas salvas'}`;
+  const sm = H.summary(rounds);
+  $('histCards').innerHTML = [15, 10].filter((d) => sm[d]).map((d) => `
+    <div class="hist-card"><span class="muted">${d} min · ${sm[d].count} ${sm[d].count === 1 ? 'roda' : 'rodas'}</span>
+    <div><b class="num">${sm[d].best}</b><small>recorde</small></div><div><b class="num">${sm[d].avg}</b><small>média</small></div></div>`).join('');
+  // evolução: últimas 12 rodas do tempo mais usado
+  const d = [15, 10].sort((a, b) => (sm[b]?.count ?? 0) - (sm[a]?.count ?? 0))[0];
+  const serie = rounds.filter((r) => r.durationMin === d).slice(0, 12).reverse();
+  const max = Math.max(1, ...serie.map((r) => r.total));
+  const W = 260, Hh = 90, bw = W / Math.max(serie.length, 6);
+  $('histChart').innerHTML = serie.length < 2 ? '' : `<p class="muted hist-chart-tit">Evolução nas rodas de ${d} min</p>
+    <svg class="hist-chart" viewBox="0 0 ${W} ${Hh + 16}" aria-hidden="true">${serie.map((r, i) => {
+      const h = Math.max(3, (r.total / max) * Hh), x = i * bw + bw * 0.15;
+      return `<rect class="${r.total === sm[d].best ? 'top' : ''}" x="${x}" y="${Hh - h}" width="${bw * 0.7}" height="${h}" rx="3"/>`
+        + `<text x="${x + bw * 0.35}" y="${Hh + 12}" text-anchor="middle">${r.total}</text>`;
+    }).join('')}</svg>`;
+  $('histList').innerHTML = rounds.map((r) => `
+    <li${r.total === sm[r.durationMin].best ? ' class="top"' : ''}>
+      <span class="hist-data">${fmtDate(r.at)}<small>${r.durationMin} min</small></span>
+      <b class="num">${r.total}</b>
+      <span class="muted hist-v">${r.vistos.length ? `1º visto ${mmss(r.vistos[0])}` : 'sem visto'}</span>
+      <button type="button" class="hist-del" data-id="${escapeHtml(r.id)}" aria-label="Apagar esta roda">✕</button>
+    </li>`).join('');
+  // "Contar esta ave" só faz sentido se não for a ave que já está no contador
+  $('histUsar').hidden = H.birdKey(s.bird) === key && !s.finished;
+  showHistDlg('ave');
+}
+$('histBtn').addEventListener('click', openBirdList);
+histChip.addEventListener('click', () => openHistory(H.birdKey(s.bird)));
+$('histAves').addEventListener('click', (e) => { const b = e.target.closest('.hist-ave'); if (b) openHistory(b.dataset.key); });
+$('histVoltar').addEventListener('click', openBirdList);
+$('histList').addEventListener('click', (e) => {
+  const b = e.target.closest('.hist-del'); if (!b) return;
+  if (!confirm('Apagar esta roda do histórico?')) return;
+  hist = H.removeRound(hist, b.dataset.id); saveHist(); render();
+  openHistory(histAtual);
+});
+$('histClear').addEventListener('click', () => {
+  const nome = H.roundsByKey(hist, histAtual)[0]?.bird || '';
+  if (!confirm(`Apagar todo o histórico de ${nome} neste celular?`)) return;
+  hist = H.removeBird(hist, histAtual); saveHist(); render();
+  openBirdList();
+});
+// coloca o nome da ave no contador (sem precisar digitar)
+$('histUsar').addEventListener('click', () => {
+  const nome = H.roundsByKey(hist, histAtual)[0]?.bird || '';
+  if (!nome) return;
+  track('historico-contar-ave');
+  // roda encerrada: já prepara uma roda nova com esta ave; antes ou durante a roda: só troca o nome
+  update(s.finished ? L.createSession(s.durationMin, nome, s.vistoStep) : L.setBird(s, nome));
+  el.bird.value = s.bird;
+  histDlg.close();
+});
+fillBirdNames();
+if (s.finished) recordRound(); // roda que terminou com o app fechado
 
 // ---------- sugestão de produto ao fim da prova ----------
 const OFFERS_SEEN_KEY = 'contador-cantos.anuncios-vistos';
