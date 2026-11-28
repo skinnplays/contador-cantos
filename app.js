@@ -113,7 +113,20 @@ function track(name, tries = 20) {
     }
   } catch { /* sem contagem */ }
 }
-if (isInstalled()) track('app-aberto-instalado');
+// App instalado: conta o uso por sistema e, uma vez por aparelho, a instalação nova.
+// (o app instalado tem memória própria, então a marquinha também funciona no iPhone)
+const systemName = isIOS ? 'iphone' : /android/i.test(navigator.userAgent) ? 'android' : 'outro';
+const INSTALL_SEEN_KEY = 'contador-cantos.instalado-contado';
+if (isInstalled()) {
+  track('app-aberto-instalado');
+  track(`app-aberto-instalado-${systemName}`);
+  try {
+    if (!localStorage.getItem(INSTALL_SEEN_KEY)) {
+      localStorage.setItem(INSTALL_SEEN_KEY, String(Date.now()));
+      track(`app-instalado-novo-${systemName}`);
+    }
+  } catch { /* sem armazenamento: não conta a instalação nova */ }
+}
 
 let installEvent = null;
 window.addEventListener('beforeinstallprompt', (e) => {
