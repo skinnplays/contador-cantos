@@ -45,6 +45,19 @@ export function addRound(h, r) {
   return { ...h, rounds: [...h.rounds, r].slice(-MAX_ROUNDS) };
 }
 
+// a mesma roda, qualquer que seja o nome (id = "<ave>|<assinatura da roda>")
+const sigOf = (id) => id.split('|').slice(-4).join('|');
+
+/** Salva a roda; se ela já estava salva com outro nome (nome digitado/corrigido depois), troca o nome. */
+export function upsertRound(h, r) {
+  if (!r) return h;
+  const sig = sigOf(r.id);
+  const old = h.rounds.find((x) => sigOf(x.id) === sig);
+  if (old && old.id === r.id) return h;
+  const rest = h.rounds.filter((x) => sigOf(x.id) !== sig);
+  return { ...h, rounds: [...rest, old ? { ...r, at: old.at } : r].slice(-MAX_ROUNDS) };
+}
+
 export function removeRound(h, id) { return { ...h, rounds: h.rounds.filter((r) => r.id !== id) }; }
 export function removeBird(h, key) { return { ...h, rounds: h.rounds.filter((r) => r.key !== key) }; }
 

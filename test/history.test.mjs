@@ -52,6 +52,16 @@ test('lista de aves: mais recente primeiro, com recorde por tempo de roda', () =
   assert.deepEqual(l.map((b) => [b.bird, b.count, b.best[15] ?? null]), [['rajada', 2, 120], ['Xerife', 1, null]]);
 });
 
+test('nome digitado depois da roda acabar salva a roda, e corrigir o nome não duplica', () => {
+  const s = sess('m', 152, 10);
+  let h = H.upsertRound(H.emptyHistory(), H.roundFromSession(s, 5, [], []));
+  for (const nome of ['ma', 'mandrak']) h = H.upsertRound(h, H.roundFromSession({ ...s, bird: nome }, 9, [], []));
+  assert.equal(h.rounds.length, 1);
+  assert.deepEqual([h.rounds[0].bird, h.rounds[0].at, h.rounds[0].total], ['mandrak', 5, 152]);
+  h = H.upsertRound(h, rodada('Xerife', 90, 7));
+  assert.equal(h.rounds.length, 2);
+});
+
 test('histórico estragado vira vazio, e apagar funciona', () => {
   assert.deepEqual(H.parseHistory('{lixo'), H.emptyHistory());
   let h = H.addRound(H.emptyHistory(), rodada('Rajada', 5, 1));

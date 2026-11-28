@@ -65,10 +65,11 @@ function save() {
 
 function update(next) {
   if (next === s) return;
-  const finishing = !s.finished && next.finished;
+  // salva no histórico quando a roda acaba, ou quando o nome é digitado/corrigido depois de acabar
+  const saveRound = next.finished && (!s.finished || next.bird !== s.bird);
   s = next;
   save();
-  if (finishing) recordRound();
+  if (saveRound) recordRound();
   render();
 }
 
@@ -665,10 +666,12 @@ function saveHist() {
 }
 function recordRound() {
   const r = H.roundFromSession(s, Date.now(), L.perMinute(s), L.vistos(s));
-  if (!r || hist.rounds.some((x) => x.id === r.id)) return;
-  hist = H.addRound(hist, r);
+  const next = H.upsertRound(hist, r);
+  if (next === hist) return;
+  const nova = next.rounds.length > hist.rounds.length;
+  hist = next;
   saveHist();
-  track('historico-roda-salva');
+  if (nova) track('historico-roda-salva');
 }
 function fillBirdNames() {
   $('birdNames').innerHTML = H.knownBirds(hist).map((n) => `<option value="${escapeHtml(n)}"></option>`).join('');
@@ -728,7 +731,7 @@ function openBirdList() {
       <span class="hist-ave-nome">${escapeHtml(b.bird)}</span>
       <span class="muted">${b.count} ${b.count === 1 ? 'roda' : 'rodas'} · recorde ${rec} · última ${fmtDate(b.last)}</span>
       <span class="hist-mais" aria-hidden="true">›</span></button></li>`;
-  }).join('') : '<li class="hist-vazio">Nenhuma roda salva ainda.<br>Digite o nome do pássaro antes de contar: quando a roda terminar, ela entra aqui sozinha.</li>';
+  }).join('') : '<li class="hist-vazio">Nenhuma roda salva ainda.<br>Escreva o nome do pássaro (antes ou depois de contar): quando a roda terminar, ela entra aqui sozinha.</li>';
   showHistDlg('aves');
 }
 // histórico de uma ave
